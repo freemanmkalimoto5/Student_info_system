@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Import Students{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Bulk Import Students</h1>
+</div>
+
+<div class="import-steps">
+    <div class="import-step">
+        <span class="import-step-number">1</span>
+        <div>
+            <strong>Download the template</strong>
+            <p>Grab the sample CSV so your columns line up exactly.</p>
+            <a href="{% url 'students:import' %}?sample=1" class="btn btn-secondary btn-small">Download Sample CSV Template</a>
+        </div>
+    </div>
+
+    <div class="import-step">
+        <span class="import-step-number">2</span>
+        <div>
+            <strong>Fill it in</strong>
+            <p>
+                Required: <code>first_name, last_name, date_of_birth</code> (YYYY-MM-DD), and
+                <code>grade_class</code> — must be exactly one of:
+                {% for key in class_order %}<code>{{ key }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
+            </p>
+            <p>
+                Optional: <code>middle_name, status, father_name, father_phone, mother_name, mother_phone,
+                guardian_name, guardian_phone, guardian_relationship, parish, full_address, region, district, ward</code>.
+            </p>
+            <p class="field-hint">Student numbers are assigned automatically — don't include that column.</p>
+        </div>
+    </div>
+
+    <div class="import-step">
+        <span class="import-step-number">3</span>
+        <div>
+            <strong>Upload it</strong>
+            <div class="upload-card">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="upload-icon">📄</div>
+                    {{ form.csv_file }}
+                    {% if form.csv_file.errors %}<p class="field-error">{{ form.csv_file.errors|striptags }}</p>{% endif %}
+                    <button type="submit" class="btn">Upload &amp; Import</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if result %}
+<div class="result-summary">
+    <span class="badge badge-success">{{ result.created|length }} created</span>
+    {% if result.skipped %}
+        <span class="badge badge-warning">{{ result.skipped|length }} skipped</span>
+    {% endif %}
+</div>
+
+{% if result.created %}
+<fieldset>
+    <legend>Newly Registered</legend>
+    <ul class="import-created-list">
+        {% for name in result.created %}
+            <li>{{ name }}</li>
+        {% endfor %}
+    </ul>
+</fieldset>
+{% endif %}
+
+{% if result.skipped %}
+<fieldset>
+    <legend>Skipped Rows</legend>
+    <div class="table-responsive">
+        <table class="student-table">
+            <thead><tr><th>Row</th><th>Reason</th></tr></thead>
+            <tbody>
+                {% for item in result.skipped %}
+                <tr><td data-label="Row">{{ item.row }}</td><td data-label="Reason">{{ item.reason }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+{% endif %}
+{% endif %}
+
+<p><a href="{% url 'students:list' %}" class="btn btn-secondary">Back to Student List</a></p>
+{% endblock %}

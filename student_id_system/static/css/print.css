@@ -1,0 +1,29 @@
+/* Print-specific overrides only — the .id-card visual styling itself
+   now lives in base.css since it's reused on both the print page and
+   the student detail page's card canvas. */
+
+.print-controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* When actually printing: hide navigation/buttons, show only the card,
+   and set a card-friendly page size. */
+@media print {
+    .no-print, .app-sidebar, .app-topbar, .footer, .print-controls {
+        display: none !important;
+    }
+
+    body { background: #fff; }
+
+    .id-card {
+        margin: 0 auto;
+        box-shadow: none;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+
+    .app-shell .app-content { margin-left: 0 !important; padding-bottom: 0 !important; }
+
+    @page {
+        size: 90mm 55mm; /* roughly credit-card sized; adjust to your card stock */
+        margin: 5mm;
+    }
+}

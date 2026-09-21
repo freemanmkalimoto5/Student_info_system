@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}{% if student %}Edit{% else %}Register{% endif %} Student{% endblock %}
+
+{% block content %}
+<h1>{% if student %}Edit Student: {{ student.full_name }}{% else %}Register New Student{% endif %}</h1>
+
+{% if form.non_field_errors %}
+    <p class="login-error">{{ form.non_field_errors }}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="student-form">
+    {% csrf_token %}
+
+    <fieldset>
+        <legend>Identity</legend>
+        <p class="field-hint">The student number is assigned automatically based on class and alphabetical order — no need to enter it.</p>
+
+        <div class="photo-upload-card">
+            {% if student and student.photo %}
+                <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="photo-upload-preview">
+            {% else %}
+                <div class="photo-upload-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+                </div>
+            {% endif %}
+            <div class="photo-upload-controls">
+                <label>Student Photo</label>
+                {{ form.photo }}
+                {% if form.photo.errors %}<p class="field-error">{{ form.photo.errors|striptags }}</p>{% endif %}
+                <p class="field-hint">A clear, front-facing photo works best — it appears on the printed ID card and the profile page.</p>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="field">{{ form.first_name.label_tag }} {{ form.first_name }}{% if form.first_name.errors %}<p class="field-error">{{ form.first_name.errors|striptags }}</p>{% endif %}</div>
+            <div class="field">{{ form.middle_name.label_tag }} {{ form.middle_name }}{% if form.middle_name.errors %}<p class="field-error">{{ form.middle_name.errors|striptags }}</p>{% endif %}</div>
+            <div class="field">{{ form.last_name.label_tag }} {{ form.last_name }}{% if form.last_name.errors %}<p class="field-error">{{ form.last_name.errors|striptags }}</p>{% endif %}</div>
+            <div class="field">
+                {{ form.date_of_birth.label_tag }} {{ form.date_of_birth }}
+                {% if form.date_of_birth.errors %}<p class="field-error">{{ form.date_of_birth.errors|striptags }}</p>{% endif %}
+                <p class="field-hint" id="age-preview"></p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Academic</legend>
+        <div class="form-grid">
+            <div class="field">{{ form.grade_class.label_tag }} {{ form.grade_class }}{% if form.grade_class.errors %}<p class="field-error">{{ form.grade_class.errors|striptags }}</p>{% endif %}</div>
+            <div class="field">{{ form.status.label_tag }} {{ form.status }}</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Parents / Guardian</legend>
+        <p class="field-hint">Providing a parent's name + phone number automatically creates their login. Username = the name exactly as typed here (e.g. "John Doe"), password = their phone number. WhatsApp numbers are optional — used only for notifications.</p>
+        <div class="form-grid">
+            <div class="field">{{ form.father_name.label_tag }} {{ form.father_name }}</div>
+            <div class="field">{{ form.father_phone.label_tag }} {{ form.father_phone }}</div>
+            <div class="field">{{ form.father_whatsapp.label_tag }} {{ form.father_whatsapp }}</div>
+            <div class="field">{{ form.mother_name.label_tag }} {{ form.mother_name }}</div>
+            <div class="field">{{ form.mother_phone.label_tag }} {{ form.mother_phone }}</div>
+            <div class="field">{{ form.mother_whatsapp.label_tag }} {{ form.mother_whatsapp }}</div>
+            <div class="field">{{ form.guardian_name.label_tag }} {{ form.guardian_name }}</div>
+            <div class="field">{{ form.guardian_phone.label_tag }} {{ form.guardian_phone }}</div>
+            <div class="field">{{ form.guardian_relationship.label_tag }} {{ form.guardian_relationship }}</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Community</legend>
+        <div class="form-grid">
+            <div class="field">{{ form.parish.label_tag }} {{ form.parish }}</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Address</legend>
+        <div class="form-grid">
+            <div class="field field-full">{{ form.full_address.label_tag }} {{ form.full_address }}</div>
+            <div class="field">{{ form.region.label_tag }} {{ form.region }}</div>
+            <div class="field">{{ form.district.label_tag }} {{ form.district }}</div>
+            <div class="field">{{ form.ward.label_tag }} {{ form.ward }}</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Pocket Money</legend>
+        {% if student %}
+            <p class="field-hint">Current balance: <strong>{{ pocket_balance }}</strong>. Adjusting this requires your own login password as confirmation — leave the amount blank to make no change.</p>
+            <div class="form-grid">
+                <div class="field">{{ adjustment_form.adjustment_type.label_tag }} {{ adjustment_form.adjustment_type }}</div>
+                <div class="field">{{ adjustment_form.amount.label_tag }} {{ adjustment_form.amount }}</div>
+                <div class="field">{{ adjustment_form.note.label_tag }} {{ adjustment_form.note }}</div>
+                <div class="field">{{ adjustment_form.admin_password.label_tag }} {{ adjustment_form.admin_password }}</div>
+            </div>
+        {% else %}
+            <div class="form-grid">
+                <div class="field">{{ deposit_form.initial_amount.label_tag }} {{ deposit_form.initial_amount }}</div>
+            </div>
+        {% endif %}
+    </fieldset>
+
+    <button type="submit">{% if student %}Save Changes{% else %}Register Student{% endif %}</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dobInput = document.getElementById('id_date_of_birth');
+    var preview = document.getElementById('age-preview');
+    if (!dobInput || !preview) return;
+
+    function updateAge() {
+        if (!dobInput.value) { preview.textContent = ''; return; }
+        var dob = new Date(dobInput.value);
+        var today = new Date();
+        var age = today.getFullYear() - dob.getFullYear();
+        var hasNotHadBirthdayThisYear = (
+            today.getMonth() < dob.getMonth() ||
+            (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())
+        );
+        if (hasNotHadBirthdayThisYear) age -= 1;
+        preview.textContent = age >= 0 ? 'Age: ' + age : '';
+    }
+
+    dobInput.addEventListener('change', updateAge);
+    updateAge();
+});
+</script>
+{% endblock %}

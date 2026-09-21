@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 90mm 55mm;
+        margin: 5mm;
+    }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+    }
+    .id-card {
+        border: 1.5px solid #1e3a5f;
+        border-radius: 6px;
+        padding: 6px;
+        text-align: center;
+    }
+    .id-card-header h2 {
+        margin: 2px 0;
+        font-size: 11px;
+        color: #1e3a5f;
+    }
+    .school-logo {
+        width: 28px;
+        height: 28px;
+    }
+    .id-card-photo {
+        width: 55px;
+        height: 55px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        margin: 4px 0;
+    }
+    .id-card-details p {
+        margin: 1px 0;
+        font-size: 9px;
+    }
+    .id-card-qr img {
+        width: 80px;
+        height: 80px;
+        margin-top: 4px;
+    }
+</style>
+</head>
+<body>
+    <div class="id-card">
+        <div class="id-card-header">
+            <img src="{% static 'img/school_logo.png' %}" alt="Logo" class="school-logo">
+            <h2>Student ID Card</h2>
+        </div>
+
+        {% if student.photo %}
+            <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo">
+        {% endif %}
+
+        <div class="id-card-details">
+            <p><strong>{{ student.full_name }}</strong></p>
+            <p>No: {{ student.student_number }}</p>
+            <p>Class: {{ student.grade_class }}</p>
+            <p>Parish: {{ student.parish|default:"—" }}</p>
+        </div>
+
+        <div class="id-card-qr">
+            <img src="{{ card.qr_image.url }}" alt="QR code">
+        </div>
+    </div>
+</body>
+</html>

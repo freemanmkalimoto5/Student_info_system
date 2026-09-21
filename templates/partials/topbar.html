@@ -1,0 +1,11 @@
+{% load static %}
+<header class="app-topbar">
+    <div class="topbar-brand">
+        <span class="topbar-school-name">{{ site_settings.school_name }}</span>
+        {% if site_settings.logo %}
+            <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.school_name }}" class="topbar-logo">
+        {% else %}
+            <img src="{% static 'img/school_logo.png' %}" alt="School Logo" class="topbar-logo">
+        {% endif %}
+    </div>
+</header>

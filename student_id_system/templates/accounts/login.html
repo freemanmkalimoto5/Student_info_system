@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block back_button %}{% endblock %}
+
+{% block content %}
+<div class="login-box">
+    <h1>Login</h1>
+    <p class="field-hint">Staff and admins use their username. Parents/guardians log in with their full name and phone number.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+            <p class="login-error">Incorrect username or password.</p>
+        {% endif %}
+
+        <label for="id_username">Username</label>
+        {{ form.username }}
+
+        <label for="id_password">Password</label>
+        {{ form.password }}
+
+        <button type="submit">Log In</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+<div class="table-responsive">
+    <table class="student-table">
+        <thead>
+            <tr>
+                <th>Photo</th>
+                <th>Student Number</th>
+                <th>Name</th>
+                <th>Class</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td data-label="Photo">
+                    {% if student.photo %}
+                        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="table-thumb">
+                    {% else %}
+                        <span class="table-thumb table-thumb-placeholder">—</span>
+                    {% endif %}
+                </td>
+                <td data-label="Student Number">{{ student.student_number }}</td>
+                <td data-label="Name">{{ student.full_name }}</td>
+                <td data-label="Class">{{ student.grade_class }}</td>
+                <td data-label="Status">{{ student.get_status_display }}</td>
+                <td data-label="Actions" class="table-actions">
+                    <a href="{% url 'students:detail' student.pk %}" class="btn btn-small">View</a>
+                    <a href="{% url 'students:update' student.pk %}" class="btn btn-small btn-secondary">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No students found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn btn-secondary">Previous</a>
+    {% endif %}
+    <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn btn-secondary">Next</a>
+    {% endif %}
+</nav>
+{% endif %}

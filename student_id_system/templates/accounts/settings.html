@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<h1>System Settings</h1>
+
+<fieldset>
+    <legend>School Branding</legend>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="field">{{ form.school_name.label_tag }} {{ form.school_name }}</div>
+            <div class="field">{{ form.logo.label_tag }} {{ form.logo }}</div>
+            <div class="field">{{ form.contact_email.label_tag }} {{ form.contact_email }}</div>
+            <div class="field">{{ form.contact_phone.label_tag }} {{ form.contact_phone }}</div>
+        </div>
+        <button type="submit">Save Settings</button>
+    </form>
+</fieldset>
+
+<fieldset>
+    <legend>Administrator Accounts</legend>
+    <p>Add a new admin login, or review who's made changes to student records.</p>
+    <div class="settings-links">
+        <a href="{% url 'accounts:add_admin' %}" class="btn">Add New Admin</a>
+        <a href="{% url 'accounts:audit_log' %}" class="btn btn-secondary">View Audit Log</a>
+    </div>
+</fieldset>
+
+<fieldset>
+    <legend>System Access</legend>
+    <p>These open the full Django admin panel for deeper management.</p>
+    <div class="settings-links">
+        <a href="/admin/" class="btn">Django Admin Panel</a>
+        <a href="/admin/auth/user/" class="btn btn-secondary">Manage Staff Accounts</a>
+        <a href="/admin/students/student/" class="btn btn-secondary">Manage Students</a>
+        <a href="/admin/qrcodes/idcard/" class="btn btn-secondary">Manage ID Cards</a>
+    </div>
+</fieldset>
+{% endblock %}

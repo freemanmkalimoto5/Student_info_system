@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Complete Your Profile{% endblock %}
+
+{% block content %}
+<h1>Welcome — Complete Your Profile</h1>
+<p>Before you continue, please tell the system who you are. This is recorded whenever you add, edit, or delete a student.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+        <div class="field">
+            {{ form.full_name.label_tag }} {{ form.full_name }}
+            {% if form.full_name.errors %}<p class="field-error">{{ form.full_name.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="field">
+            {{ form.phone.label_tag }} {{ form.phone }}
+        </div>
+        <div class="field">
+            {{ form.position.label_tag }} {{ form.position }}
+        </div>
+    </div>
+    <button type="submit">Save and Continue</button>
+</form>
+{% endblock %}

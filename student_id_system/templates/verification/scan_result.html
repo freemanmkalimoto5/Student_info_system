@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Verify Student{% endblock %}
+{% block back_button %}{% endblock %}
+
+{% block content %}
+<div class="verify-card">
+    <div class="verify-badge">✓ Verified</div>
+
+    {% if student.photo %}
+        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="verify-photo">
+    {% endif %}
+
+    <h1>{{ student.full_name }}</h1>
+    <span class="badge badge-success">{{ student.get_status_display }}</span>
+
+    <dl>
+        <dt>Student Number</dt><dd>{{ student.student_number }}</dd>
+        <dt>Class</dt><dd>{{ student.get_grade_class_display }}</dd>
+        <dt>Parish</dt><dd>{{ student.parish|default:"—" }}</dd>
+        <dt>School</dt><dd>{{ site_settings.school_name }}</dd>
+    </dl>
+
+    <p class="verify-note">
+        This confirms the ID card belongs to a registered student of {{ site_settings.school_name }}.
+    </p>
+</div>
+{% endblock %}

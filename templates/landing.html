@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Welcome{% endblock %}
+{% block back_button %}{% endblock %}
+
+{% block content %}
+<div class="landing-hero">
+    {% if site_settings.logo %}
+        <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.school_name }}" class="landing-logo">
+    {% else %}
+        <img src="{% static 'img/school_logo.png' %}" alt="School Logo" class="landing-logo">
+    {% endif %}
+
+    <h1>Welcome to {{ site_settings.school_name }}</h1>
+    <p class="landing-subtitle">Student ID &amp; Records System</p>
+    <p class="landing-description">
+        Register students, generate and print secure QR-coded ID cards,
+        and let parents check in on their child's details — all in one place.
+    </p>
+
+    <a href="{% url 'accounts:login' %}" class="btn btn-large">Login</a>
+</div>
+{% endblock %}

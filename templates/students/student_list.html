@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Students</h1>
+</div>
+
+{% if summary %}
+<div class="summary-cards">
+    <div class="summary-card summary-card-total">
+        <span class="summary-number">{{ summary.total }}</span>
+        <span class="summary-label">Total Students</span>
+    </div>
+    {% for label, count in summary.class_summary %}
+    <div class="summary-card">
+        <span class="summary-number">{{ count }}</span>
+        <span class="summary-label">{{ label }}</span>
+    </div>
+    {% endfor %}
+    <div class="summary-card summary-card-warning">
+        <span class="summary-number">{{ summary.suspended }}</span>
+        <span class="summary-label">Suspended</span>
+    </div>
+    <div class="summary-card summary-card-warning">
+        <span class="summary-number">{{ summary.transferred }}</span>
+        <span class="summary-label">Transferred</span>
+    </div>
+    <div class="summary-card summary-card-success">
+        <span class="summary-number">{{ summary.graduated }}</span>
+        <span class="summary-label">Graduated</span>
+    </div>
+</div>
+{% endif %}
+
+<div class="search-form">
+    <input
+        type="text"
+        id="student-search-input"
+        name="q"
+        value="{{ query }}"
+        placeholder="Type to search by name, number, or class…"
+        autocomplete="off"
+    >
+</div>
+
+<div id="student-table-container">
+    {% include 'students/_student_table.html' %}
+</div>
+{% endblock %}

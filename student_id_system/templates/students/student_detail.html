@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+
+    <div class="detail-main">
+        <div class="detail-header">
+            {% if student.photo %}
+                <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="student-photo">
+            {% else %}
+                <div class="student-photo student-photo-placeholder">No Photo</div>
+            {% endif %}
+            <div>
+                <h1>{{ student.full_name }}</h1>
+                <span class="badge badge-success">{{ student.get_status_display }}</span>
+                <span class="badge badge-warning">{{ student.get_grade_class_display }}</span>
+            </div>
+        </div>
+
+        <fieldset>
+            <legend>Student Information</legend>
+            <dl>
+                <dt>Student Number</dt><dd>{{ student.student_number }}</dd>
+                <dt>Date of Birth</dt><dd>{{ student.date_of_birth }} (Age {{ student.age }})</dd>
+            </dl>
+        </fieldset>
+
+        <fieldset>
+            <legend>Parents / Guardian</legend>
+            <dl>
+                <dt>Father</dt><dd>{{ student.father_name|default:"—" }} {{ student.father_phone }}</dd>
+                <dt>Mother</dt><dd>{{ student.mother_name|default:"—" }} {{ student.mother_phone }}</dd>
+                <dt>Guardian</dt><dd>{{ student.guardian_name|default:"—" }} ({{ student.guardian_relationship|default:"—" }}) {{ student.guardian_phone }}</dd>
+            </dl>
+        </fieldset>
+
+        <fieldset>
+            <legend>Community &amp; Address</legend>
+            <dl>
+                <dt>Parish</dt><dd>{{ student.parish|default:"—" }}</dd>
+                <dt>Address</dt><dd>{{ student.full_address|default:"—" }}, {{ student.ward }}, {{ student.district }}, {{ student.region }}</dd>
+                <dt>Registered By</dt>
+                <dd>{% if student.added_by %}{{ student.added_by.get_full_name|default:student.added_by.username }}{% else %}—{% endif %}</dd>
+            </dl>
+        </fieldset>
+
+        <fieldset>
+            <legend>Pocket Money</legend>
+            <p><a href="{% url 'pocketmoney:detail' student.pk %}" class="btn btn-secondary">View Balance &amp; Transactions</a></p>
+        </fieldset>
+
+        <div class="qr-actions">
+            {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'students:update' student.pk %}" class="btn btn-secondary">Edit</a>
+                <a href="{% url 'students:delete' student.pk %}" class="btn btn-danger">Delete</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-canvas">
+        <div class="id-card">
+            <div class="id-card-header">
+                <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'img/school_logo.png' %}{% endif %}" alt="Logo" class="school-logo">
+                <h2>Student ID Card</h2>
+            </div>
+            <div class="id-card-body">
+                {% if student.photo %}
+                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo">
+                {% endif %}
+                <div class="id-card-details">
+                    <p><strong>{{ student.full_name }}</strong></p>
+                    <p>No: {{ student.student_number }}</p>
+                    <p>Class: {{ student.get_grade_class_display }}</p>
+                    <p>Parish: {{ student.parish|default:"—" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-preview-box">
+            {% if card.qr_image %}
+                <img src="{{ card.qr_image.url }}" alt="QR code" class="qr-image">
+            {% endif %}
+        </div>
+
+        <div class="qr-actions">
+            <a href="{% url 'qrcodes:print' student.pk %}" class="btn">Print ID Card</a>
+            <a href="{% url 'qrcodes:download_pdf' student.pk %}" class="btn btn-secondary">Download PDF</a>
+            {% if user.is_staff or user.is_superuser %}
+                <form method="post" action="{% url 'qrcodes:regenerate' student.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Regenerate QR</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

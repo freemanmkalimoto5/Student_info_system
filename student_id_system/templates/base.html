@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student ID System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell{% if not user.is_authenticated %} no-sidebar{% endif %}">
+        {% if user.is_authenticated %}
+            {% include 'partials/sidebar.html' %}
+        {% endif %}
+
+        <div class="app-content">
+            {% include 'partials/topbar.html' %}
+
+            <main class="container">
+                {% block back_button %}
+                <a href="javascript:void(0)" onclick="history.back()" class="back-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Back
+                </a>
+                {% endblock %}
+
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li class="message {{ message.tags }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            {% include 'partials/footer.html' %}
+        </div>
+    </div>
+
+    <script src="{% static 'js/live_search.js' %}" defer></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

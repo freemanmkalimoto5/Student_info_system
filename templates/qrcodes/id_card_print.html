@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Print ID Card - {{ student.full_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="print-controls no-print">
+    <button onclick="window.print()" class="btn">Print Now</button>
+    <a href="{% url 'qrcodes:download_pdf' student.pk %}" class="btn">Download PDF</a>
+    <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Confirm Printed</button>
+    </form>
+    <a href="{% url 'qrcodes:preview' student.pk %}" class="btn btn-secondary">Back to Preview</a>
+</div>
+
+<div class="id-card">
+    <div class="id-card-header">
+        <img src="{% static 'img/school_logo.png' %}" alt="School Logo" class="school-logo">
+        <h2>Student ID Card</h2>
+    </div>
+
+    <div class="id-card-body">
+        {% if student.photo %}
+            <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo">
+        {% endif %}
+
+        <div class="id-card-details">
+            <p><strong>{{ student.full_name }}</strong></p>
+            <p>No: {{ student.student_number }}</p>
+            <p>Class: {{ student.grade_class }}</p>
+            <p>Parish: {{ student.parish|default:"—" }}</p>
+        </div>
+
+        <div class="id-card-qr">
+            <img src="{{ card.qr_image.url }}" alt="QR code">
+        </div>
+    </div>
+</div>
+{% endblock %}

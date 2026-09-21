@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}QR Preview - {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<h1>QR Code Preview</h1>
+<h2>{{ student.full_name }} ({{ student.student_number }})</h2>
+
+<div class="qr-preview-box">
+    {% if card.qr_image %}
+        <img src="{{ card.qr_image.url }}" alt="QR code for {{ student.student_number }}" class="qr-image">
+    {% else %}
+        <p>No QR code generated yet.</p>
+    {% endif %}
+</div>
+
+<div class="qr-actions">
+    <a href="{% url 'qrcodes:print' student.pk %}" class="btn">Print This Card</a>
+    <a href="{% url 'qrcodes:download_pdf' student.pk %}" class="btn">Download PDF</a>
+    <form method="post" action="{% url 'qrcodes:regenerate' student.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Regenerate QR</button>
+    </form>
+    <a href="{% url 'students:detail' student.pk %}" class="btn btn-secondary">Back to Student</a>
+</div>
+
+<p class="qr-meta">
+    Generated: {{ card.generated_at }} &middot;
+    Printed {{ card.print_count }} time{{ card.print_count|pluralize }}
+    {% if card.last_printed_at %}(last: {{ card.last_printed_at }}){% endif %}
+</p>
+{% endblock %}

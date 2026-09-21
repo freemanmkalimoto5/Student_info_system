@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}My Settings{% endblock %}
+
+{% block content %}
+<h1>My Settings</h1>
+<p class="field-hint">As a Clerk, you can update your own contact info and interface preferences here. School-wide settings and admin management aren't available to your role.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+        <div class="field">{{ form.email.label_tag }} {{ form.email }}</div>
+        <div class="field">{{ form.phone.label_tag }} {{ form.phone }}</div>
+        <div class="field">{{ form.theme.label_tag }} {{ form.theme }}</div>
+        <div class="field">{{ form.language.label_tag }} {{ form.language }}</div>
+    </div>
+    <button type="submit">Save Settings</button>
+</form>
+{% endblock %}
