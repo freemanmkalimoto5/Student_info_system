@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Import Progress{% endblock %}
+
+{% block content %}
+<h1>Bulk Import</h1>
+
+<div id="import-progress-card" data-job-id="{{ job.pk }}">
+    <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-bar-fill" style="width: {{ job.percent }}%;"></div>
+    </div>
+    <p id="progress-status-text">
+        {% if job.status == 'pending' %}Starting…
+        {% elif job.status == 'processing' %}Processing {{ job.processed_rows }} of {{ job.total_rows }} students…
+        {% elif job.status == 'done' %}Done!
+        {% elif job.status == 'failed' %}Import failed.
+        {% endif %}
+    </p>
+    <p class="field-hint">You can safely leave this page or close your browser — the import keeps running on the server and will finish either way. Come back to this page any time to check on it.</p>
+</div>
+
+<div id="import-results" style="{% if job.status != 'done' and job.status != 'failed' %}display:none;{% endif %}">
+    <div id="import-error" style="{% if job.status != 'failed' %}display:none;{% endif %}">
+        <p class="login-error" id="import-error-text">{{ job.error_message }}</p>
+    </div>
+
+    <div id="import-summary" style="{% if job.status != 'done' %}display:none;{% endif %}">
+        <div class="result-summary">
+            <span class="badge badge-success" id="created-badge">{{ job.created_count }} created</span>
+            <span class="badge badge-warning" id="skipped-badge" style="{% if not job.skipped_details %}display:none;{% endif %}">{{ job.skipped_details|length }} skipped</span>
+        </div>
+
+        <fieldset id="created-fieldset" style="{% if not job.created_names %}display:none;{% endif %}">
+            <legend>Newly Registered</legend>
+            <ul class="import-created-list" id="created-list">
+                {% for name in job.created_names %}<li>{{ name }}</li>{% endfor %}
+            </ul>
+        </fieldset>
+
+        <fieldset id="skipped-fieldset" style="{% if not job.skipped_details %}display:none;{% endif %}">
+            <legend>Skipped Rows</legend>
+            <div class="table-responsive">
+                <table class="student-table" id="skipped-table">
+                    <thead><tr><th>Row</th><th>Reason</th></tr></thead>
+                    <tbody id="skipped-tbody">
+                        {% for item in job.skipped_details %}
+                        <tr><td data-label="Row">{{ item.row }}</td><td data-label="Reason">{{ item.reason }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+<p>
+    <a href="{% url 'students:import' %}" class="btn btn-secondary">Import Another File</a>
+    <a href="{% url 'students:list' %}" class="btn btn-secondary">Back to Student List</a>
+</p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var card = document.getElementById('import-progress-card');
+    if (!card) return;
+    var jobId = card.dataset.jobId;
+    var statusUrl = '/students/import/' + jobId + '/status/';
+
+    var fill = document.getElementById('progress-bar-fill');
+    var statusText = document.getElementById('progress-status-text');
+    var resultsBox = document.getElementById('import-results');
+    var errorBox = document.getElementById('import-error');
+    var errorText = document.getElementById('import-error-text');
+    var summaryBox = document.getElementById('import-summary');
+    var createdBadge = document.getElementById('created-badge');
+    var skippedBadge = document.getElementById('skipped-badge');
+    var createdFieldset = document.getElementById('created-fieldset');
+    var createdList = document.getElementById('created-list');
+    var skippedFieldset = document.getElementById('skipped-fieldset');
+    var skippedTbody = document.getElementById('skipped-tbody');
+
+    var pollTimer = null;
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function renderDone(data) {
+        clearInterval(pollTimer);
+        statusText.textContent = 'Done!';
+        resultsBox.style.display = 'block';
+        summaryBox.style.display = 'block';
+
+        createdBadge.textContent = data.created_count + ' created';
+
+        if (data.skipped_details.length > 0) {
+            skippedBadge.style.display = 'inline-block';
+            skippedBadge.textContent = data.skipped_details.length + ' skipped';
+            skippedFieldset.style.display = 'block';
+            skippedTbody.innerHTML = data.skipped_details.map(function (item) {
+                return '<tr><td data-label="Row">' + escapeHtml(String(item.row)) + '</td>' +
+                       '<td data-label="Reason">' + escapeHtml(item.reason) + '</td></tr>';
+            }).join('');
+        }
+
+        if (data.created_names.length > 0) {
+            createdFieldset.style.display = 'block';
+            createdList.innerHTML = data.created_names.map(function (name) {
+                return '<li>' + escapeHtml(name) + '</li>';
+            }).join('');
+        }
+    }
+
+    function renderFailed(data) {
+        clearInterval(pollTimer);
+        statusText.textContent = 'Import failed.';
+        resultsBox.style.display = 'block';
+        errorBox.style.display = 'block';
+        errorText.textContent = data.error_message;
+    }
+
+    function poll() {
+        fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                fill.style.width = data.percent + '%';
+
+                if (data.status === 'processing') {
+                    statusText.textContent = 'Processing ' + data.processed_rows + ' of ' + data.total_rows + ' students…';
+                } else if (data.status === 'pending') {
+                    statusText.textContent = 'Starting…';
+                } else if (data.status === 'done') {
+                    renderDone(data);
+                } else if (data.status === 'failed') {
+                    renderFailed(data);
+                }
+            })
+            .catch(function () {
+                // A transient network hiccup — just try again on the next tick.
+            });
+    }
+
+    poll();
+    pollTimer = setInterval(poll, 1200);
+});
+</script>
+{% endblock %}

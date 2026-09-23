@@ -8,6 +8,24 @@
     <legend>School Branding</legend>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+
+        <div class="logo-preview-row">
+            <div class="logo-preview-box">
+                <span class="logo-preview-label">Current Logo</span>
+                {% if site_settings.logo %}
+                    <img src="{{ site_settings.logo.url }}" alt="Current logo" class="logo-preview-img">
+                {% else %}
+                    <div class="logo-preview-placeholder">No logo set</div>
+                {% endif %}
+            </div>
+            <div class="logo-preview-arrow">→</div>
+            <div class="logo-preview-box">
+                <span class="logo-preview-label">New Logo (preview)</span>
+                <img id="logo-preview-new" src="" alt="New logo preview" class="logo-preview-img" style="display:none;">
+                <div id="logo-preview-placeholder-new" class="logo-preview-placeholder">Choose a file below to preview</div>
+            </div>
+        </div>
+
         <div class="form-grid">
             <div class="field">{{ form.school_name.label_tag }} {{ form.school_name }}</div>
             <div class="field">{{ form.logo.label_tag }} {{ form.logo }}</div>
@@ -37,4 +55,27 @@
         <a href="/admin/qrcodes/idcard/" class="btn btn-secondary">Manage ID Cards</a>
     </div>
 </fieldset>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var logoInput = document.getElementById('id_logo');
+    var previewImg = document.getElementById('logo-preview-new');
+    var placeholder = document.getElementById('logo-preview-placeholder-new');
+    if (!logoInput || !previewImg || !placeholder) return;
+
+    logoInput.addEventListener('change', function () {
+        var file = logoInput.files && logoInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 {% endblock %}

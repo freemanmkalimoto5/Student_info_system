@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Student
+from .models import Student, ImportJob
 
 
 @admin.register(Student)
@@ -30,3 +30,13 @@ class StudentAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('enrollment_date',)
+
+
+@admin.register(ImportJob)
+class ImportJobAdmin(admin.ModelAdmin):
+    list_display = ('id', 'status', 'processed_rows', 'total_rows', 'created_count', 'created_by', 'created_at')
+    list_filter = ('status',)
+    readonly_fields = [f.name for f in ImportJob._meta.fields]
+
+    def has_add_permission(self, request):
+        return False  # jobs are only ever created by the import view itself

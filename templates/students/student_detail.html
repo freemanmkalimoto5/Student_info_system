@@ -63,7 +63,7 @@
         <div class="id-card">
             <div class="id-card-header">
                 <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'img/school_logo.png' %}{% endif %}" alt="Logo" class="school-logo">
-                <h2>Student ID Card</h2>
+                <h2>{{ site_settings.school_name }}</h2>
             </div>
             <div class="id-card-body">
                 {% if student.photo %}
@@ -75,6 +75,11 @@
                     <p>Class: {{ student.get_grade_class_display }}</p>
                     <p>Parish: {{ student.parish|default:"—" }}</p>
                 </div>
+                {% if card.qr_image %}
+                <div class="id-card-qr">
+                    <img src="{{ card.qr_image.url }}" alt="QR code">
+                </div>
+                {% endif %}
             </div>
         </div>
 

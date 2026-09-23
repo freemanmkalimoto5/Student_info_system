@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Clear All Audit Logs{% endblock %}
+
+{% block content %}
+<h1>Clear All Audit Logs</h1>
+
+<p>Are you sure you want to permanently delete <strong>all {{ count }}</strong> audit log entries?</p>
+<p>This cannot be undone.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Clear Everything</button>
+    <a href="{% url 'accounts:audit_log' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

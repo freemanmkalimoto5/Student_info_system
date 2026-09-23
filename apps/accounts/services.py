@@ -92,7 +92,7 @@ def _to_whatsapp_chat_id(phone_number):
     return f"{number}@c.us"
 
 
-def sync_parent_account(student, full_name, phone, relationship, whatsapp=None):
+def sync_parent_account(student, full_name, phone, relationship, whatsapp=None, notify=True):
     """
     Ensures a login exists for one parent/guardian of a student:
       - username: their name EXACTLY as typed on the student form
@@ -104,7 +104,10 @@ def sync_parent_account(student, full_name, phone, relationship, whatsapp=None):
     a duplicate — both students just get linked to the same account.
 
     A brand-new account gets a one-time WhatsApp message with their
-    login details (best-effort — see send_whatsapp_message).
+    login details (best-effort — see send_whatsapp_message), unless
+    notify=False (used during bulk CSV import so hundreds of network
+    calls don't slow the import down — logins are still created
+    normally either way).
 
     Does nothing if either name or phone is missing.
     """
@@ -124,13 +127,14 @@ def sync_parent_account(student, full_name, phone, relationship, whatsapp=None):
         account = ParentAccount.objects.create(
             user=user, full_name=full_name, phone=phone, relationship=relationship
         )
-        welcome_number = whatsapp or phone
-        send_whatsapp_message(
-            welcome_number,
-            f"Hello {full_name}, you've been registered as a parent/guardian on "
-            f"the Student ID System.\nLogin username: {username}\n"
-            f"Login password: your phone number ({phone})."
-        )
+        if notify:
+            welcome_number = whatsapp or phone
+            send_whatsapp_message(
+                welcome_number,
+                f"Hello {full_name}, you've been registered as a parent/guardian on "
+                f"the Student ID System.\nLogin username: {username}\n"
+                f"Login password: your phone number ({phone})."
+            )
     elif account.full_name != full_name:
         # Staff corrected/updated the parent's name — keep it current.
         account.full_name = full_name
@@ -139,19 +143,19 @@ def sync_parent_account(student, full_name, phone, relationship, whatsapp=None):
     account.students.add(student)
 
 
-def sync_all_parent_accounts(student):
+def sync_all_parent_accounts(student, notify=True):
     """Runs sync_parent_account for father, mother, and guardian at once."""
     sync_parent_account(
         student, student.father_name, student.father_phone, 'Father',
-        whatsapp=student.father_whatsapp
+        whatsapp=student.father_whatsapp, notify=notify
     )
     sync_parent_account(
         student, student.mother_name, student.mother_phone, 'Mother',
-        whatsapp=student.mother_whatsapp
+        whatsapp=student.mother_whatsapp, notify=notify
     )
     sync_parent_account(
         student, student.guardian_name, student.guardian_phone,
-        student.guardian_relationship or 'Guardian'
+        student.guardian_relationship or 'Guardian', notify=notify
     )
 
 

@@ -89,14 +89,25 @@ def generate_id_card_qr(student) -> ContentFile:
     Build the QR for a given Student instance and return it as a
     Django ContentFile, ready to be saved onto an ImageField.
 
-    The QR encodes a full URL to that student's public verification
-    page, so scanning it with a phone camera opens the page directly.
+    The QR encodes the student's key details as plain text directly —
+    NOT a link. Scanning it with any phone camera or QR app shows the
+    information immediately, with no internet connection, no LAN
+    access to this server, and no server needing to be running at all.
     The student number is still shown as visible text at the center.
     """
-    from django.conf import settings
+    from apps.accounts.models import SiteSettings
 
-    verify_path = f"/verify/{student.student_number}/"
-    data = f"{settings.SITE_URL}{verify_path}"
+    site_settings = SiteSettings.load()
+
+    data = (
+        "STUDENT ID VERIFICATION\n"
+        f"School: {site_settings.school_name}\n"
+        f"Name: {student.full_name}\n"
+        f"Student Number: {student.student_number}\n"
+        f"Class: {student.get_grade_class_display()}\n"
+        f"Status: {student.get_status_display()}\n"
+        f"Parish: {student.parish or '-'}"
+    )
     center_text = student.student_number
 
     image = generate_qr_code_image(data, center_text)
@@ -143,6 +154,9 @@ def generate_id_card_pdf(student, card) -> bytes:
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import mm
     from django.conf import settings
+    from apps.accounts.models import SiteSettings
+
+    site_settings = SiteSettings.load()
 
     width, height = 90 * mm, 55 * mm
     buffer = io.BytesIO()
@@ -153,9 +167,17 @@ def generate_id_card_pdf(student, card) -> bytes:
     c.setLineWidth(1)
     c.roundRect(2 * mm, 2 * mm, width - 4 * mm, height - 4 * mm, 3 * mm, stroke=1, fill=0)
 
-    # School logo, top-left
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'school_logo.png')
-    if os.path.exists(logo_path):
+    # School logo, top-left — uses the uploaded logo if one is set,
+    # otherwise falls back to the default placeholder.
+    logo_path = None
+    if site_settings.logo and os.path.exists(site_settings.logo.path):
+        logo_path = site_settings.logo.path
+    else:
+        default_logo = os.path.join(settings.BASE_DIR, 'static', 'img', 'school_logo.png')
+        if os.path.exists(default_logo):
+            logo_path = default_logo
+
+    if logo_path:
         c.drawImage(
             logo_path, 4 * mm, height - 13 * mm, width=8 * mm, height=8 * mm,
             preserveAspectRatio=True, mask='auto'
@@ -163,7 +185,10 @@ def generate_id_card_pdf(student, card) -> bytes:
 
     # Title
     c.setFont("Helvetica-Bold", 8)
-    c.drawCentredString(width / 2, height - 8 * mm, "Student ID Card")
+    school_name = site_settings.school_name
+    if len(school_name) > 28:  # keep it on one line on a 90mm-wide card
+        school_name = school_name[:26] + "…"
+    c.drawCentredString(width / 2, height - 8 * mm, school_name)
 
     # Student photo, left side — clipped to a circle for a modern look
     if student.photo and os.path.exists(student.photo.path):
@@ -187,7 +212,7 @@ def generate_id_card_pdf(student, card) -> bytes:
     c.drawString(text_x, text_y, student.full_name)
     c.setFont("Helvetica", 6)
     c.drawString(text_x, text_y - 4 * mm, f"No: {student.student_number}")
-    c.drawString(text_x, text_y - 8 * mm, f"Class: {student.grade_class}")
+    c.drawString(text_x, text_y - 8 * mm, f"Class: {student.get_grade_class_display()}")
     c.drawString(text_x, text_y - 12 * mm, f"Parish: {student.parish or '-'}")
 
     # QR code, bottom-right

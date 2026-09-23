@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Delete Audit Log Entry{% endblock %}
+
+{% block content %}
+<h1>Delete Audit Log Entry</h1>
+
+<p>Are you sure you want to permanently delete this audit log entry?</p>
+<dl>
+    <dt>When</dt><dd>{{ log.timestamp }}</dd>
+    <dt>Action</dt><dd>{{ log.get_action_display }}</dd>
+    <dt>Student</dt><dd>{{ log.student_name }} ({{ log.student_number }})</dd>
+    <dt>Performed By</dt><dd>{{ log.performed_by_name|default:"—" }}</dd>
+</dl>
+<p>This cannot be undone.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Delete Entry</button>
+    <a href="{% url 'accounts:audit_log' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

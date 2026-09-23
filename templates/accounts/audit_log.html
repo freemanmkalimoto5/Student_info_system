@@ -5,6 +5,10 @@
 <h1>Audit Log</h1>
 <p>Recent additions, edits, and deletions of student records (most recent 200).</p>
 
+{% if user.is_superuser and logs %}
+<p><a href="{% url 'accounts:audit_log_clear_all' %}" class="btn btn-danger">Clear All Logs</a></p>
+{% endif %}
+
 <div class="table-responsive">
     <table class="student-table">
         <thead>
@@ -14,6 +18,7 @@
                 <th>Student</th>
                 <th>Number</th>
                 <th>Performed By</th>
+                {% if user.is_superuser %}<th>Actions</th>{% endif %}
             </tr>
         </thead>
         <tbody>
@@ -24,9 +29,14 @@
                 <td data-label="Student">{{ log.student_name }}</td>
                 <td data-label="Number">{{ log.student_number }}</td>
                 <td data-label="Performed By">{{ log.performed_by_name|default:"—" }}</td>
+                {% if user.is_superuser %}
+                <td data-label="Actions">
+                    <a href="{% url 'accounts:audit_log_delete' log.pk %}" class="btn btn-small btn-danger">Delete</a>
+                </td>
+                {% endif %}
             </tr>
             {% empty %}
-            <tr><td colspan="5">No activity recorded yet.</td></tr>
+            <tr><td colspan="6">No activity recorded yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>

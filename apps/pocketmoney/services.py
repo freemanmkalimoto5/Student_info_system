@@ -23,14 +23,15 @@ def get_balance(student):
     return result['total'] or Decimal('0.00')
 
 
-def add_transaction(student, transaction_type, amount, note, user):
+def add_transaction(student, transaction_type, amount, note, user, notify=True):
     """
     Records a deposit or withdrawal. Raises ValueError if a withdrawal
     would take the balance negative — pocket money can't go below zero.
     Logged in both the Transaction table (this app) and the shared
     AuditLog (see apps.accounts), and sends a WhatsApp notification to
     the student's parents afterward (best-effort; failures are logged,
-    never block the transaction).
+    never block the transaction) unless notify=False (used during bulk
+    CSV import so hundreds of network calls don't slow it down).
     """
     from apps.accounts.services import log_action
 
@@ -52,7 +53,8 @@ def add_transaction(student, transaction_type, amount, note, user):
     audit_action = 'pocket_money_deposit' if transaction_type == 'deposit' else 'pocket_money_withdrawal'
     log_action(student, audit_action, user)
 
-    _notify_parents(student, transaction)
+    if notify:
+        _notify_parents(student, transaction)
     return transaction
 
 
@@ -79,12 +81,18 @@ def _notify_parents(student, transaction):
     from apps.accounts.services import send_whatsapp_message
 
     new_balance = get_balance(student)
-    action_word = "deposited into" if transaction.transaction_type == 'deposit' else "withdrawn from"
+    if transaction.transaction_type == 'withdrawal':
+        action_line = f"Withdrawn: {transaction.amount}"
+    else:
+        action_line = f"Deposited: {transaction.amount}"
+
     message = (
-        f"Pocket money update for {student.full_name} ({student.student_number}):\n"
-        f"{transaction.amount} has been {action_word} their account.\n"
-        f"New balance: {new_balance}."
+        f"Pocket Money Update — {student.full_name} ({student.student_number})\n"
+        f"{action_line}\n"
+        f"Total Balance: {new_balance}"
     )
+    if transaction.note:
+        message += f"\nNote: {transaction.note}"
 
     for phone in _parent_notification_numbers(student):
         send_whatsapp_message(phone, message)

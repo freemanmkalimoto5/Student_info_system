@@ -26,8 +26,9 @@
                 {% for key in class_order %}<code>{{ key }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
             </p>
             <p>
-                Optional: <code>middle_name, status, father_name, father_phone, mother_name, mother_phone,
-                guardian_name, guardian_phone, guardian_relationship, parish, full_address, region, district, ward</code>.
+                Optional: <code>middle_name, status, father_name, father_phone, father_whatsapp,
+                mother_name, mother_phone, mother_whatsapp, guardian_name, guardian_phone, guardian_relationship,
+                parish, full_address, region, district, ward, initial_pocket_money</code>.
             </p>
             <p class="field-hint">Student numbers are assigned automatically — don't include that column.</p>
         </div>
@@ -49,42 +50,6 @@
         </div>
     </div>
 </div>
-
-{% if result %}
-<div class="result-summary">
-    <span class="badge badge-success">{{ result.created|length }} created</span>
-    {% if result.skipped %}
-        <span class="badge badge-warning">{{ result.skipped|length }} skipped</span>
-    {% endif %}
-</div>
-
-{% if result.created %}
-<fieldset>
-    <legend>Newly Registered</legend>
-    <ul class="import-created-list">
-        {% for name in result.created %}
-            <li>{{ name }}</li>
-        {% endfor %}
-    </ul>
-</fieldset>
-{% endif %}
-
-{% if result.skipped %}
-<fieldset>
-    <legend>Skipped Rows</legend>
-    <div class="table-responsive">
-        <table class="student-table">
-            <thead><tr><th>Row</th><th>Reason</th></tr></thead>
-            <tbody>
-                {% for item in result.skipped %}
-                <tr><td data-label="Row">{{ item.row }}</td><td data-label="Reason">{{ item.reason }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</fieldset>
-{% endif %}
-{% endif %}
 
 <p><a href="{% url 'students:list' %}" class="btn btn-secondary">Back to Student List</a></p>
 {% endblock %}

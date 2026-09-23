@@ -291,6 +291,8 @@ dl dd { margin: 0; word-break: break-word; }
 .id-card-photo { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 1px solid #ccc; }
 .id-card-details { text-align: center; font-size: 0.85rem; line-height: 1.4; }
 .id-card-details p { margin: 0.1rem 0; }
+.id-card-qr { margin-top: 0.5rem; }
+.id-card-qr img { width: 110px; height: 110px; }
 
 /* ---------------------------------------------------------------------
    Student detail page — two-column layout (info left, card canvas right)
@@ -378,13 +380,35 @@ dl dd { margin: 0; word-break: break-word; }
     padding: 0.9rem;
     text-align: center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: block;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
 }
+.summary-card:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+.summary-card-active { border-color: #5ea1e6; }
 .summary-number { display: block; font-size: 1.4rem; font-weight: bold; color: #1e3a5f; }
 .summary-label { display: block; font-size: 0.72rem; color: #666; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.03em; }
 .summary-card-total { background: #1e3a5f; }
 .summary-card-total .summary-number, .summary-card-total .summary-label { color: #fff; }
 .summary-card-warning .summary-number { color: #b06b00; }
 .summary-card-success .summary-number { color: #1a7a3c; }
+
+.active-filter-banner {
+    background: #eef2f6;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.clear-filter-link { color: #b02a37; text-decoration: none; font-weight: bold; font-size: 0.8rem; }
+.clear-filter-link:hover { text-decoration: underline; }
 
 /* ---------------------------------------------------------------------
    Photo preview (edit form) and placeholder (detail page)
@@ -488,6 +512,43 @@ dl dd { margin: 0; word-break: break-word; }
 .badge-warning { background: #fff3cd; color: #856404; }
 
 .import-created-list { columns: 2; margin: 0; padding-left: 1.2rem; font-size: 0.85rem; }
+
+.progress-bar-track {
+    width: 100%;
+    height: 22px;
+    background: #eef2f6;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1e3a5f, #5ea1e6);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+#progress-status-text { font-weight: bold; color: #1e3a5f; margin: 0.5rem 0; }
+
+.logo-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+.logo-preview-box {
+    background: #fafbfc;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+.logo-preview-label { display: block; font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+.logo-preview-img { width: 64px; height: 64px; object-fit: cover; border-radius: 50%; border: 1px solid #ccc; }
+.logo-preview-placeholder { width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: #eef2f6; color: #999; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; padding: 0.25rem; }
+.logo-preview-arrow { font-size: 1.3rem; color: #999; }
 
 
 /* ==========================================================================

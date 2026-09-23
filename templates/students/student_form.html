@@ -16,13 +16,16 @@
         <p class="field-hint">The student number is assigned automatically based on class and alphabetical order — no need to enter it.</p>
 
         <div class="photo-upload-card">
-            {% if student and student.photo %}
-                <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="photo-upload-preview">
-            {% else %}
-                <div class="photo-upload-placeholder">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
-                </div>
-            {% endif %}
+            <img
+                id="photo-preview-img"
+                src="{% if student and student.photo %}{{ student.photo.url }}{% endif %}"
+                alt="Photo preview"
+                class="photo-upload-preview"
+                {% if not student or not student.photo %}style="display:none;"{% endif %}
+            >
+            <div id="photo-preview-placeholder" class="photo-upload-placeholder" {% if student and student.photo %}style="display:none;"{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+            </div>
             <div class="photo-upload-controls">
                 <label>Student Photo</label>
                 {{ form.photo }}
@@ -107,6 +110,26 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Show the chosen photo immediately, before the form is submitted.
+    var photoInput = document.getElementById('id_photo');
+    var previewImg = document.getElementById('photo-preview-img');
+    var placeholder = document.getElementById('photo-preview-placeholder');
+    if (photoInput && previewImg && placeholder) {
+        photoInput.addEventListener('change', function () {
+            var file = photoInput.files && photoInput.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
     var dobInput = document.getElementById('id_date_of_birth');
     var preview = document.getElementById('age-preview');

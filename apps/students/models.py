@@ -100,12 +100,55 @@ class Student(models.Model):
         parts = [self.first_name, self.middle_name, self.last_name]
         return " ".join(p for p in parts if p)
 
+    @staticmethod
+    def calculate_age(date_of_birth):
+        """
+        Shared by save() and the bulk CSV import path (which uses
+        bulk_create and therefore skips save() entirely) so age is
+        computed the same way everywhere.
+        """
+        today = date.today()
+        return today.year - date_of_birth.year - (
+            (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+        )
+
     def save(self, *args, **kwargs):
         # Auto-calculate age from date_of_birth whenever it isn't set,
         # so staff don't have to compute it by hand on the form.
         if self.date_of_birth and not self.age:
-            today = date.today()
-            self.age = today.year - self.date_of_birth.year - (
-                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
-            )
+            self.age = Student.calculate_age(self.date_of_birth)
         super().save(*args, **kwargs)
+
+
+class ImportJob(models.Model):
+    """
+    Tracks a bulk CSV import running in a background thread, so the
+    upload page can show a live progress bar and the import keeps
+    running even if the person navigates away — it's not tied to
+    their browser connection at all, just a server-side job.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('done', 'Done'),
+        ('failed', 'Failed'),
+    ]
+
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
+    total_rows = models.PositiveIntegerField(default=0)
+    processed_rows = models.PositiveIntegerField(default=0)
+    created_count = models.PositiveIntegerField(default=0)
+    created_names = models.JSONField(default=list, blank=True)
+    skipped_details = models.JSONField(default=list, blank=True)
+    error_message = models.CharField(max_length=500, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def percent(self):
+        if not self.total_rows:
+            return 0
+        return round(100 * self.processed_rows / self.total_rows)

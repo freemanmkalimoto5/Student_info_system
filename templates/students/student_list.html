@@ -8,28 +8,35 @@
 
 {% if summary %}
 <div class="summary-cards">
-    <div class="summary-card summary-card-total">
+    <a href="{% url 'students:list' %}" class="summary-card summary-card-total {% if not class_filter and not status_filter %}summary-card-active{% endif %}">
         <span class="summary-number">{{ summary.total }}</span>
         <span class="summary-label">Total Students</span>
-    </div>
-    {% for label, count in summary.class_summary %}
-    <div class="summary-card">
+    </a>
+    {% for key, label, count in summary.class_summary %}
+    <a href="{% url 'students:list' %}?class={{ key|urlencode }}" class="summary-card {% if class_filter == key %}summary-card-active{% endif %}">
         <span class="summary-number">{{ count }}</span>
         <span class="summary-label">{{ label }}</span>
-    </div>
+    </a>
     {% endfor %}
-    <div class="summary-card summary-card-warning">
+    <a href="{% url 'students:list' %}?status=suspended" class="summary-card summary-card-warning {% if status_filter == 'suspended' %}summary-card-active{% endif %}">
         <span class="summary-number">{{ summary.suspended }}</span>
         <span class="summary-label">Suspended</span>
-    </div>
-    <div class="summary-card summary-card-warning">
+    </a>
+    <a href="{% url 'students:list' %}?status=transferred" class="summary-card summary-card-warning {% if status_filter == 'transferred' %}summary-card-active{% endif %}">
         <span class="summary-number">{{ summary.transferred }}</span>
         <span class="summary-label">Transferred</span>
-    </div>
-    <div class="summary-card summary-card-success">
+    </a>
+    <a href="{% url 'students:list' %}?status=graduated" class="summary-card summary-card-success {% if status_filter == 'graduated' %}summary-card-active{% endif %}">
         <span class="summary-number">{{ summary.graduated }}</span>
         <span class="summary-label">Graduated</span>
-    </div>
+    </a>
+</div>
+{% endif %}
+
+{% if class_filter or status_filter %}
+<div class="active-filter-banner">
+    Showing: <strong>{{ class_filter_label }}{% if class_filter and status_filter %}, {% endif %}{{ status_filter_label }}</strong>
+    <a href="{% url 'students:list' %}" class="clear-filter-link">Clear filter ✕</a>
 </div>
 {% endif %}
 

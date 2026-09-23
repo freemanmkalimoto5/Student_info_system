@@ -19,8 +19,8 @@
 
 <div class="id-card">
     <div class="id-card-header">
-        <img src="{% static 'img/school_logo.png' %}" alt="School Logo" class="school-logo">
-        <h2>Student ID Card</h2>
+        <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'img/school_logo.png' %}{% endif %}" alt="Logo" class="school-logo">
+        <h2>{{ site_settings.school_name }}</h2>
     </div>
 
     <div class="id-card-body">
@@ -31,7 +31,7 @@
         <div class="id-card-details">
             <p><strong>{{ student.full_name }}</strong></p>
             <p>No: {{ student.student_number }}</p>
-            <p>Class: {{ student.grade_class }}</p>
+            <p>Class: {{ student.get_grade_class_display }}</p>
             <p>Parish: {{ student.parish|default:"—" }}</p>
         </div>
 

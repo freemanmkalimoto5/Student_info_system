@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from apps.accounts.decorators import admin_required
@@ -13,8 +13,8 @@ from apps.pocketmoney.forms import InitialDepositForm, BalanceAdjustmentForm
 from apps.pocketmoney.services import add_transaction, get_balance
 
 from .forms import StudentForm, CSVImportForm
-from .models import Student
-from .services import import_students_from_csv, renumber_students, CLASS_ORDER
+from .models import Student, ImportJob
+from .services import renumber_students, run_import_job, CLASS_ORDER
 
 
 def _is_admin(user):
@@ -150,9 +150,20 @@ def student_list(request):
     Admins see every student. A parent login sees only their own
     child(ren) — the search box and pagination still work, just
     scoped to whatever they're allowed to see.
+
+    ?class=form_two and/or ?status=suspended filter the list — these
+    are what the clickable summary cards link to. Both can combine
+    with the free-text search box too.
     """
     query = request.GET.get('q', '').strip()
+    class_filter = request.GET.get('class', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
     students = _visible_students_qs(request.user)
+    if class_filter:
+        students = students.filter(grade_class=class_filter)
+    if status_filter:
+        students = students.filter(status=status_filter)
     if query:
         students = students.filter(
             models_q_search(query)
@@ -166,6 +177,10 @@ def student_list(request):
         'students': page_obj,   # iterable in the template, same as before
         'page_obj': page_obj,
         'query': query,
+        'class_filter': class_filter,
+        'status_filter': status_filter,
+        'class_filter_label': dict(Student.CLASS_CHOICES).get(class_filter, ''),
+        'status_filter_label': dict(Student.STATUS_CHOICES).get(status_filter, ''),
     }
 
     # Live search hits this same view via fetch(), asking for just the
@@ -186,7 +201,7 @@ def _build_summary():
         Student.objects.values_list('grade_class').annotate(count=Count('id'))
     )
     class_summary = [
-        (label, raw_class_counts.get(key, 0))
+        (key, label, raw_class_counts.get(key, 0))
         for key, label in Student.CLASS_CHOICES
     ]
 
@@ -239,30 +254,51 @@ def student_import(request):
     if request.GET.get('sample') == '1':
         return _sample_csv_response()
 
-    result = None
     if request.method == 'POST':
         form = CSVImportForm(request.POST, request.FILES)
         if form.is_valid():
-            result = import_students_from_csv(form.cleaned_data['csv_file'])
-            if result['created']:
-                renumber_students()  # assign real numbers once, after the whole batch
-                messages.success(
-                    request,
-                    f"Imported {len(result['created'])} student(s) successfully."
-                )
-            if result['skipped']:
-                messages.warning(
-                    request,
-                    f"{len(result['skipped'])} row(s) were skipped — see details below."
-                )
-            form = CSVImportForm()  # reset the form for another upload
+            # Decode the file NOW, in this request, since the uploaded
+            # file's temp storage isn't guaranteed to survive once this
+            # view returns — the background thread gets plain text.
+            decoded_csv_text = form.cleaned_data['csv_file'].read().decode('utf-8-sig')
+
+            job = ImportJob.objects.create(created_by=request.user)
+
+            import threading
+            threading.Thread(
+                target=run_import_job, args=(job.pk, decoded_csv_text), daemon=True
+            ).start()
+
+            return redirect('students:import_progress', job_id=job.pk)
     else:
         form = CSVImportForm()
 
     return render(request, 'students/student_import.html', {
         'form': form,
-        'result': result,
         'class_order': CLASS_ORDER,
+    })
+
+
+@admin_required
+def import_progress(request, job_id):
+    """Shows a live progress bar for a running/finished bulk import job."""
+    job = get_object_or_404(ImportJob, pk=job_id)
+    return render(request, 'students/import_progress.html', {'job': job})
+
+
+@admin_required
+def import_status(request, job_id):
+    """JSON endpoint the progress page polls to update its progress bar."""
+    job = get_object_or_404(ImportJob, pk=job_id)
+    return JsonResponse({
+        'status': job.status,
+        'total_rows': job.total_rows,
+        'processed_rows': job.processed_rows,
+        'percent': job.percent,
+        'created_count': job.created_count,
+        'created_names': job.created_names,
+        'skipped_details': job.skipped_details,
+        'error_message': job.error_message,
     })
 
 
@@ -279,14 +315,14 @@ def _sample_csv_response():
         "father_name,father_phone,father_whatsapp,"
         "mother_name,mother_phone,mother_whatsapp,"
         "guardian_name,guardian_phone,guardian_relationship,"
-        "parish,full_address,region,district,ward\n"
+        "parish,full_address,region,district,ward,initial_pocket_money\n"
     )
     sample_row = (
         "Jane,John,Doe,2008-05-14,form four,active,"
         "John Doe,0700000000,0700000000,"
         "Mary Doe,0700000001,0700000001,"
         "Aunt Jane,0700000002,Aunt,"
-        "Usokami,Kibengu Street,Iringa,Mufindi,Usokami\n"
+        "Usokami,Kibengu Street,Iringa,Mufindi,Usokami,5000\n"
     )
     response = HttpResponse(header + sample_row, content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="student_import_sample.csv"'

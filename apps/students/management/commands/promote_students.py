@@ -64,7 +64,7 @@ class Command(BaseCommand):
         if summary_lines:
             # Renumbering also regenerates QR codes for anyone whose
             # student_number changed as a result of the class shift.
-            renumber_students()
+            renumber_students(background_qr=False)
             for line in summary_lines:
                 self.stdout.write(self.style.SUCCESS(line))
         else:

@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
-from .decorators import admin_required, full_admin_required, is_clerk
+from .decorators import admin_required, full_admin_required, superuser_required, is_clerk
 from .forms import SiteSettingsForm, AddAdminForm, AdminProfileForm, ClerkSettingsForm
 from .models import SiteSettings, AdminProfile, AuditLog
 
@@ -144,3 +144,27 @@ def audit_log(request):
     """Recent create/update/delete history for students and pocket money. Full admins only — not clerks."""
     logs = AuditLog.objects.all()[:200]
     return render(request, 'accounts/audit_log.html', {'logs': logs})
+
+
+@superuser_required
+def audit_log_delete(request, pk):
+    """Delete one audit log entry. Superuser only — not even regular admins/clerks."""
+    log = get_object_or_404(AuditLog, pk=pk)
+    if request.method == 'POST':
+        log.delete()
+        messages.success(request, "Audit log entry deleted.")
+        return redirect('accounts:audit_log')
+    return render(request, 'accounts/audit_log_confirm_delete.html', {'log': log})
+
+
+@superuser_required
+def audit_log_clear_all(request):
+    """Wipe the entire audit log. Superuser only."""
+    if request.method == 'POST':
+        count = AuditLog.objects.count()
+        AuditLog.objects.all().delete()
+        messages.success(request, f"Cleared {count} audit log entr{'y' if count == 1 else 'ies'}.")
+        return redirect('accounts:audit_log')
+    return render(request, 'accounts/audit_log_confirm_clear.html', {
+        'count': AuditLog.objects.count(),
+    })
