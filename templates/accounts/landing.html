@@ -1,0 +1,45 @@
+{# Landing page with the login form beside it. Point your existing `landing` view at this template. #}
+{% load static %}
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ site_settings.school_name|default:"Student ID System" }}</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#1c2b3a}
+  .wrap{min-height:100vh;display:grid;grid-template-columns:1.2fr 1fr;background:linear-gradient(135deg,#0d3b66,#1b6ca8)}
+  .left{padding:8vw 6vw;color:#fff;display:flex;flex-direction:column;justify-content:center}
+  .left img{width:84px;height:84px;object-fit:contain;background:#fff;border-radius:50%;padding:6px;margin-bottom:18px}
+  .left h1{font-size:2.4rem;margin:0 0 10px}
+  .left p{font-size:1.1rem;opacity:.92;max-width:34rem}
+  .left ul{list-style:none;padding:0;margin:22px 0 0;font-size:1.05rem;line-height:2}
+  .right{display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:#fff;border-radius:18px;padding:32px;width:100%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 4px} .card small{color:#667}
+  .card input{width:100%;padding:12px;margin:8px 0 14px;border:1px solid #cbd3dc;border-radius:10px;font-size:1rem}
+  .card button{width:100%;padding:12px;border:0;border-radius:10px;background:#1b6ca8;color:#fff;font-size:1.05rem;cursor:pointer}
+  .card button:hover{background:#0d3b66}
+  @media(max-width:820px){.wrap{grid-template-columns:1fr}.left{padding:36px 24px}}
+</style></head>
+<body><div class="wrap">
+  <section class="left">
+    {% if site_settings.logo %}<img src="{{ site_settings.logo.url }}" alt="Logo">{% endif %}
+    <h1>{{ site_settings.school_name|default:"Our School" }}</h1>
+    <p>Student ID System: secure QR ID cards, parent access to their child's record, and pocket money tracking.</p>
+    <ul>
+      <li>✔ QR ID cards readable offline</li>
+      <li>✔ Parents see their child's information</li>
+      <li>✔ Pocket money with instant records</li>
+    </ul>
+  </section>
+  <section class="right">
+    <form class="card" method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      <h2>Sign in</h2><small>Staff and parents</small>
+      <label>Username</label>
+      <input name="username" required autofocus autocomplete="username">
+      <label>Password</label>
+      <input type="password" name="password" required autocomplete="current-password">
+      <button type="submit">Login</button>
+    </form>
+  </section>
+</div></body></html>

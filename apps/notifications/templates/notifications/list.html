@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .nf-wrap{max-width:900px}
+  .nf-card{border:1px solid #e3e8ee;border-radius:12px;padding:16px 18px;margin-bottom:12px;background:#fff}
+  .nf-card.pending{border-left:4px solid #b45309}
+  .nf-card.fixed{border-left:4px solid #15803d;opacity:.85}
+  .nf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .nf-title{font-weight:700;color:#1f2d3d}
+  .nf-badge{font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
+  .nf-badge.pending{background:#fef3c7;color:#b45309}
+  .nf-badge.fixed{background:#dcfce7;color:#15803d}
+  .nf-msg{white-space:pre-line;color:#475467;font-size:.92rem;margin:8px 0}
+  .nf-meta{color:#8792a2;font-size:.8rem}
+  .nf-btn{display:inline-block;border:0;border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#15803d;margin-top:8px}
+  .nf-empty{color:#8792a2;padding:20px 0;text-align:center}
+</style>
+
+<div class="nf-wrap">
+  <h2>Notifications {% if pending_count %}<span class="nf-badge pending">{{ pending_count }} pending</span>{% endif %}</h2>
+
+  <h3 style="margin-top:20px;color:#1f3b5e">Pending</h3>
+  {% for n in pending %}
+    <div class="nf-card pending">
+      <div class="nf-top">
+        <span class="nf-title">{{ n.title }}</span>
+        <span class="nf-badge pending">Pending</span>
+      </div>
+      <div class="nf-msg">{{ n.message }}</div>
+      <div class="nf-meta">
+        {{ n.created_at|date:"d M Y, H:i" }}
+        {% if n.existing_student %} · existing record:
+          <a href="{% url 'students:detail' n.existing_student.pk %}">{{ n.existing_student.full_name }} ({{ n.existing_student.student_number }})</a>
+        {% endif %}
+      </div>
+      <form method="post" action="{% url 'notifications:mark_fixed' n.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="nf-btn">Mark as fixed</button>
+      </form>
+    </div>
+  {% empty %}
+    <p class="nf-empty">Nothing pending.</p>
+  {% endfor %}
+
+  <h3 style="margin-top:28px;color:#1f3b5e">Recently fixed</h3>
+  {% for n in fixed %}
+    <div class="nf-card fixed">
+      <div class="nf-top">
+        <span class="nf-title">{{ n.title }}</span>
+        <span class="nf-badge fixed">Fixed</span>
+      </div>
+      <div class="nf-msg">{{ n.message }}</div>
+      <div class="nf-meta">
+        Fixed {{ n.fixed_at|date:"d M Y, H:i" }}{% if n.fixed_by %} by {{ n.fixed_by.get_full_name|default:n.fixed_by.username }}{% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p class="nf-empty">No fixed notifications yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

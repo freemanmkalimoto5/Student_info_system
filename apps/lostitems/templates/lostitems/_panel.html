@@ -1,0 +1,46 @@
+{% include 'lostitems/_styles.html' %}
+<fieldset>
+  <legend>Lost Items</legend>
+
+  {% if items %}
+    <div class="li-stats">
+      <div class="li-stat"><small>Total</small><b>{{ total|floatformat:"0g" }}</b></div>
+      <div class="li-stat paid"><small>Paid</small><b>{{ paid|floatformat:"0g" }}</b></div>
+      <div class="li-stat bal {% if balance == 0 %}clear{% endif %}"><small>Balance</small><b>{{ balance|floatformat:"0g" }}</b></div>
+    </div>
+    <div class="li-progress"><span style="width:{{ percent }}%"></span></div>
+    <div class="li-plabel"><span>{{ percent }}% paid</span><span>TSh</span></div>
+
+    <div class="li-list">
+      {% for item in items %}
+      <div class="li-item {% if item.status == 'paid' %}done{% endif %}">
+        <div class="li-top">
+          <b class="li-name">{{ item.item_name }}</b>
+          <span class="li-badge {{ item.status }}">{{ item.get_status_display }}</span>
+        </div>
+        <div class="li-date">Lost {{ item.date_lost|date:"d M Y" }}{% if item.note %} · {{ item.note }}{% endif %}</div>
+        <div class="li-money">
+          <div><small>Price</small>{{ item.price|floatformat:"0g" }}</div>
+          <div><small>Paid</small>{{ item.amount_paid|floatformat:"0g" }}</div>
+          <div class="b {% if item.balance == 0 %}zero{% endif %}"><small>Balance</small>{{ item.balance|floatformat:"0g" }}</div>
+        </div>
+        <div class="li-progress"><span style="width:{{ item.percent_paid }}%"></span></div>
+        {% if can_manage %}
+        <div class="li-actions">
+          {% if item.balance > 0 %}<a class="li-btn ok" href="{% url 'lostitems:pay' item.pk %}">Pay</a>{% endif %}
+          <a class="li-btn ghost" href="{% url 'lostitems:edit' item.pk %}">Edit</a>
+          {% if is_superuser %}<a class="li-btn del" href="{% url 'lostitems:delete' item.pk %}">Delete</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="li-empty">No lost items recorded for this student.</p>
+  {% endif %}
+
+  <div class="li-foot">
+    {% if items %}<a class="li-btn main" href="{% url 'lostitems:report' student.pk %}">Generate report</a>{% endif %}
+    {% if can_manage %}<a class="li-btn ghost" href="{% url 'lostitems:add' student.pk %}">+ Add lost item</a>{% endif %}
+  </div>
+</fieldset>

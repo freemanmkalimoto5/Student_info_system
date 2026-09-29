@@ -152,3 +152,25 @@ class ImportJob(models.Model):
         if not self.total_rows:
             return 0
         return round(100 * self.processed_rows / self.total_rows)
+
+
+
+
+class RolloverLog(models.Model):
+    """
+    One row per automatic class promotion (1 Jan / 1 Jun). Stops the
+    same rollover from ever running twice in the same year.
+    """
+    EVENT_CHOICES = [('january', 'January (O-level)'), ('june', 'June (A-level)')]
+
+    event = models.CharField(max_length=10, choices=EVENT_CHOICES)
+    year = models.PositiveIntegerField()
+    promoted_count = models.PositiveIntegerField(default=0)
+    graduated_count = models.PositiveIntegerField(default=0)
+    ran_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'year')
+
+    def __str__(self):
+        return f"{self.get_event_display()} {self.year}"

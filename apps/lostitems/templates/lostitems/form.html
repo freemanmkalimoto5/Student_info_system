@@ -1,0 +1,27 @@
+{# change "base.html" / "content" if your base template uses other names #}
+{% extends "base.html" %}
+{% block content %}
+{% include 'lostitems/_styles.html' %}
+<div class="lp-page">
+  <div class="lp-card">
+    <h2>{{ title }}</h2>
+    <p class="lp-sub">Student: <b>{{ student.full_name }}</b> ({{ student.student_number }})</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+      <div class="lp-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="lp-help">{{ field.help_text }}</div>{% endif %}
+        {% for e in field.errors %}<div class="lp-err">{{ e }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <div class="lp-row">
+        <button type="submit" class="li-btn main">Save</button>
+        <a href="{% url 'students:detail' student.pk %}" class="li-btn ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

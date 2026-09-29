@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+{% include 'lostitems/_styles.html' %}
+<div class="lp-page">
+  <div class="lp-card">
+    <h2>Delete lost item record?</h2>
+    <p class="lp-sub"><b>{{ item.item_name }}</b> · TSh {{ item.price|floatformat:"0g" }} · {{ item.get_status_display }}<br>
+       Student: {{ student.full_name }} ({{ student.student_number }})<br>
+       Its payment records will be deleted too.</p>
+    <form method="post" class="lp-row">
+      {% csrf_token %}
+      <button type="submit" class="li-btn del">Yes, delete</button>
+      <a href="{% url 'students:detail' student.pk %}" class="li-btn ghost">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

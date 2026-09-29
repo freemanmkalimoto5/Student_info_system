@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     'apps.verification',
     'apps.accounts',
     'apps.pocketmoney',
+    'apps.lostitems',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [

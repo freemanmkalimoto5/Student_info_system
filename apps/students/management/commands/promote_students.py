@@ -1,71 +1,65 @@
 r"""
-Promotes students between classes automatically, based on the current
-month:
-  - January:  form one -> two -> three -> four -> five (all at once)
-  - July:     form five -> form six
-  - June:     form six students are marked as graduated
+Automatic class promotion (REPLACES the old promote_students.py).
 
-This has no built-in scheduler — Django itself can't run code on a
-timer. Schedule this command to run daily (it's safe to run every day;
-it only acts during the relevant month, and running it twice in the
-same month is harmless since promoted students no longer match the
-filter the second time):
+  1 January : form four -> graduated, form three -> four, two -> three, one -> two
+              (+ renumber, + rebuild QR codes of forms 1-4 and the graduates)
+  1 June    : form six  -> graduated, form five -> form six
+              (+ renumber, + rebuild QR codes of the new form six and the graduates)
 
-  Windows: use Task Scheduler to run, once a day,
-      C:\path\to\venv\Scripts\python.exe manage.py promote_students
-  from the project directory.
+Schedule ONE daily task (Windows Task Scheduler):
+    C:\path\to\venv\Scripts\python.exe manage.py promote_students
+Each rollover runs only ONCE per year (recorded in RolloverLog), so running
+the command every day is safe. If the computer was off on 1 Jan / 1 Jun, the
+next run during that same month catches up.
 
-  Linux/macOS: a daily cron entry running
-      python manage.py promote_students
+Other options
+  --force january|june     run that rollover now (still only once per year)
+  --mark-done january|june record it as already done WITHOUT changing anything
+                           (use in the year you start using this system)
+  --regenerate-all         renumber everyone and rebuild every QR code
 """
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.students.models import Student
-from apps.students.services import renumber_students
-
-JANUARY_PROMOTIONS = {
-    'form one': 'form two',
-    'form two': 'form three',
-    'form three': 'form four',
-    'form four': 'form five',
-}
+from apps.students import services
+from apps.students.models import RolloverLog, Student
 
 
 class Command(BaseCommand):
-    help = "Promotes students between classes based on the academic calendar (see module docstring)."
+    help = "Promotes students on 1 January (O-level) and 1 June (A-level)."
 
-    def handle(self, *args, **options):
-        month = timezone.now().month
-        summary_lines = []
+    def add_arguments(self, parser):
+        parser.add_argument('--force', choices=['january', 'june'])
+        parser.add_argument('--mark-done', choices=['january', 'june'])
+        parser.add_argument('--regenerate-all', action='store_true')
 
-        if month == 1:
-            for old_class, new_class in JANUARY_PROMOTIONS.items():
-                qs = Student.objects.filter(grade_class=old_class, status='active')
-                count = qs.count()
-                if count:
-                    qs.update(grade_class=new_class)
-                    summary_lines.append(f"{count} student(s) moved from {old_class} to {new_class}")
+    def handle(self, *args, **opts):
+        today = timezone.localdate()
 
-        if month == 7:
-            qs = Student.objects.filter(grade_class='form five', status='active')
-            count = qs.count()
-            if count:
-                qs.update(grade_class='form six')
-                summary_lines.append(f"{count} student(s) moved from form five to form six")
+        if opts['regenerate_all']:
+            services.renumber_students(background_qr=False, regenerate=False)
+            services._regenerate_qr_codes(list(Student.objects.all()))
+            self.stdout.write(self.style.SUCCESS("Renumbered and rebuilt every QR code."))
+            return
 
-        if month == 6:
-            qs = Student.objects.filter(grade_class='form six', status='active')
-            count = qs.count()
-            if count:
-                qs.update(status='graduated')
-                summary_lines.append(f"{count} student(s) in form six marked as graduated")
+        if opts['mark_done']:
+            RolloverLog.objects.get_or_create(event=opts['mark_done'], year=today.year)
+            self.stdout.write(f"{opts['mark_done']} {today.year} marked as done. Nothing was changed.")
+            return
 
-        if summary_lines:
-            # Renumbering also regenerates QR codes for anyone whose
-            # student_number changed as a result of the class shift.
-            renumber_students(background_qr=False)
-            for line in summary_lines:
-                self.stdout.write(self.style.SUCCESS(line))
-        else:
-            self.stdout.write("No promotions applicable this month.")
+        event = opts['force']
+        if not event:
+            event = {1: 'january', 6: 'june'}.get(today.month)
+        if not event:
+            self.stdout.write("Nothing to do this month.")
+            return
+
+        if RolloverLog.objects.filter(event=event, year=today.year).exists():
+            self.stdout.write(f"{event.capitalize()} {today.year} rollover was already done. Skipping.")
+            return
+
+        result = services.january_rollover(today) if event == 'january' else services.june_rollover(today)
+        self.stdout.write(self.style.SUCCESS(
+            f"{event.capitalize()} rollover done: {result['promoted']} promoted, "
+            f"{result['graduated']} graduated, {result['qr_rebuilt']} QR codes rebuilt."
+        ))

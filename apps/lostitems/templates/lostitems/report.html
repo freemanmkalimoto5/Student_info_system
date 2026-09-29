@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+{% include 'lostitems/_styles.html' %}
+<div class="lp-page wide">
+
+  <div class="lp-card no-print">
+    <div class="lp-row" style="justify-content:space-between">
+      <div class="lp-row">
+        <a class="li-btn main" href="{% url 'lostitems:report_pdf' student.pk %}">Download PDF</a>
+        <button class="li-btn ghost" type="button" onclick="window.print()">Print</button>
+        <a class="li-btn ghost" href="{% url 'students:detail' student.pk %}">Back</a>
+      </div>
+      {% if can_manage %}
+      <form method="post" action="{% url 'lostitems:report_send' student.pk %}"
+            onsubmit="return confirm('Send this report to the parent on WhatsApp now?');">
+        {% csrf_token %}
+        <button class="li-btn wa" type="submit" {% if not numbers %}disabled title="No parent phone number on file"{% endif %}>Send to parent on WhatsApp</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if can_manage %}
+      <div class="lp-help" style="margin-top:10px">
+        {% if numbers %}Will be sent to:
+          {% for label, number in numbers %}<b>{{ label }}</b> {{ number }}{% if not forloop.last %} · {% endif %}{% endfor %}
+        {% else %}<span class="lp-err">This student has no parent or guardian phone number on file.</span>{% endif %}
+      </div>
+    {% endif %}
+    {% if messages %}{% for m in messages %}<div class="lp-alert {% if m.tags == 'error' %}warn{% else %}info{% endif %}" style="margin:12px 0 0">{{ m }}</div>{% endfor %}{% endif %}
+  </div>
+
+  <div class="lp-card">
+    <div class="lp-row" style="justify-content:space-between;border-bottom:2px solid #1f3b5e;padding-bottom:10px;margin-bottom:14px">
+      <div>
+        <h2 style="margin:0">{{ site_settings.school_name }}</h2>
+        <div class="lp-sub" style="margin:0;font-weight:700">LOST ITEMS REPORT</div>
+      </div>
+      <div class="lp-sub" style="margin:0">Date: {{ r.generated_at|date:"d F Y" }}</div>
+    </div>
+
+    <div class="lp-grid2" style="margin-bottom:16px">
+      <div><small>Student</small><b>{{ student.full_name }}</b></div>
+      <div><small>Student number</small><b>{{ student.student_number }}</b></div>
+      <div><small>Class</small>{{ student.get_grade_class_display }}</div>
+      <div><small>Parish</small>{{ student.parish|default:"-" }}</div>
+    </div>
+
+    <h3 style="color:#1f3b5e;margin:0 0 8px">Items lost</h3>
+    <div style="overflow-x:auto">
+    <table class="lp-table">
+      <thead><tr><th>#</th><th>Item</th><th>Date lost</th><th class="num">Price</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for item in r.items %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ item.item_name }}{% if item.note %}<div class="lp-help">{{ item.note }}</div>{% endif %}</td>
+          <td>{{ item.date_lost|date:"d M Y" }}</td>
+          <td class="num">{{ item.price|floatformat:"0g" }}</td>
+          <td class="num">{{ item.amount_paid|floatformat:"0g" }}</td>
+          <td class="num">{{ item.balance|floatformat:"0g" }}</td>
+          <td><span class="li-badge {{ item.status }}">{{ item.get_status_display }}</span></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="li-empty">No lost items recorded.</td></tr>
+      {% endfor %}
+      </tbody>
+      {% if r.items %}
+      <tfoot><tr><td></td><td>TOTAL (TSh)</td><td></td>
+        <td class="num">{{ r.total|floatformat:"0g" }}</td><td class="num">{{ r.paid|floatformat:"0g" }}</td><td class="num">{{ r.balance|floatformat:"0g" }}</td><td></td></tr></tfoot>
+      {% endif %}
+    </table>
+    </div>
+
+    {% if r.payments %}
+    <h3 style="color:#1f3b5e;margin:20px 0 8px">Payments received</h3>
+    <div style="overflow-x:auto">
+    <table class="lp-table">
+      <thead><tr><th>Date</th><th>Item</th><th class="num">Amount (TSh)</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for p in r.payments %}
+        <tr><td>{{ p.created_at|date:"d M Y" }}</td><td>{{ p.item.item_name }}</td><td class="num">{{ p.amount|floatformat:"0g" }}</td><td>{{ p.note|default:"-" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% endif %}
+
+    <div class="lp-money" style="margin-top:20px">
+      <div><small>Total value</small>TSh {{ r.total|floatformat:"0g" }}</div>
+      <div><small>Paid</small>TSh {{ r.paid|floatformat:"0g" }}</div>
+      <div><small>Balance due</small>TSh {{ r.balance|floatformat:"0g" }}</div>
+    </div>
+    {% if r.balance > 0 %}<div class="lp-help">Please contact the school office to clear the outstanding balance.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

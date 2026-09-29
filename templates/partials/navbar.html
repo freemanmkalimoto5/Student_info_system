@@ -11,6 +11,7 @@
             <a href="{% url 'students:list' %}">Students</a>
             <a href="{% url 'students:create' %}">Register Student</a>
             <a href="{% url 'students:import' %}">Bulk Import</a>
+            <a href="{% url 'notifications:list' %}">Notifications</a>
             <form method="post" action="{% url 'accounts:logout' %}" class="navbar-logout-form">
                 {% csrf_token %}
                 <button type="submit" class="navbar-logout">Log Out ({{ user.username }})</button>

@@ -11,10 +11,11 @@ from apps.accounts.services import sync_all_parent_accounts, log_action
 from apps.qrcodes.services import get_or_create_card
 from apps.pocketmoney.forms import InitialDepositForm, BalanceAdjustmentForm
 from apps.pocketmoney.services import add_transaction, get_balance
+from .import_utils import read_uploaded_table_as_csv_text
 
 from .forms import StudentForm, CSVImportForm
 from .models import Student, ImportJob
-from .services import renumber_students, run_import_job, CLASS_ORDER
+from .services import renumber_students, run_import_job, CLASS_ORDER, sort_students
 
 
 def _is_admin(user):
@@ -169,7 +170,8 @@ def student_list(request):
             models_q_search(query)
         )
 
-    paginator = Paginator(students, 20)  # 20 students per page
+    students = sort_students(students)                      # FI.1, FI.2 ... FVI.n, graduated last
+    paginator = Paginator(students, max(len(students), 1))  # one page = everyone, no Next button
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -257,10 +259,18 @@ def student_import(request):
     if request.method == 'POST':
         form = CSVImportForm(request.POST, request.FILES)
         if form.is_valid():
-            # Decode the file NOW, in this request, since the uploaded
-            # file's temp storage isn't guaranteed to survive once this
-            # view returns — the background thread gets plain text.
-            decoded_csv_text = form.cleaned_data['csv_file'].read().decode('utf-8-sig')
+            uploaded = form.cleaned_data['csv_file']
+            # Works for .csv, .xlsx, .xlsm and .xls -- always converted to
+            # the same plain CSV text the background import job expects,
+            # decoded NOW since the upload's temp storage isn't
+            # guaranteed to survive once this view returns.
+            try:
+                decoded_csv_text = read_uploaded_table_as_csv_text(uploaded, uploaded.name)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return render(request, 'students/student_import.html', {
+                    'form': form, 'class_order': CLASS_ORDER,
+                })
 
             job = ImportJob.objects.create(created_by=request.user)
 

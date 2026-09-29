@@ -13,6 +13,8 @@ urlpatterns = [
     path('verify/', include('apps.verification.urls')),   # public scan endpoint
     path('accounts/', include('apps.accounts.urls')),
     path('pocketmoney/', include('apps.pocketmoney.urls')),
+    path('lostitems/', include('apps.lostitems.urls')),
+    path('notifications/', include('apps.notifications.urls')),
 
     # Public welcome page — logged-in users are bounced straight to
     # their student list from inside the view itself.

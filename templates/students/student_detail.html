@@ -1,8 +1,84 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load lostitems_tags %}
 {% block title %}{{ student.full_name }}{% endblock %}
 
 {% block content %}
+<style>
+    .detail-layout{display:grid !important;grid-template-columns:minmax(0,2fr) minmax(0,3fr) !important;gap:24px !important;align-items:start}
+    .detail-main,.detail-canvas{width:auto !important;max-width:none !important;min-width:0 !important;flex:none !important}
+    @media (max-width:900px){.detail-layout{grid-template-columns:1fr !important}}
+
+    /* ---- Student info sections ---- */
+    .sd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;padding:6px 4px 4px}
+    .sd-item{min-width:0}
+    .sd-item small{display:block;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8792a2;margin-bottom:3px}
+    .sd-item .v{font-size:1rem;color:#1f2d3d;line-height:1.35;word-break:break-word}
+    .sd-item .v.big{font-size:1.15rem;font-weight:700;color:#1f3b5e}
+    .sd-item.full{grid-column:1/-1}
+    .sd-muted{color:#a0a9b6}
+    .sd-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:6px 0 2px}
+    .sd-person{background:#f7f9fc;border:1px solid #e6ebf1;border-radius:12px;padding:12px 14px;min-width:0}
+    .sd-person.full{grid-column:1/-1}
+    .sd-role{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8792a2}
+    .sd-pname{font-weight:700;font-size:1.02rem;color:#1f2d3d;margin:3px 0 6px;word-break:break-word}
+    .sd-line{font-size:.92rem;color:#475467;margin-top:2px}
+    .sd-line a{color:#1f3b5e;font-weight:600;text-decoration:none}
+    .sd-line a:hover{text-decoration:underline}
+    .sd-line small{color:#8792a2;margin-right:4px}
+    @media (max-width:600px){.sd-grid,.sd-people{grid-template-columns:1fr}}
+
+    /* ---- ID card: nicer design ---- */
+    .id-card{
+        background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%);
+        border:1px solid #e3e8ee !important;
+        border-radius:18px !important;
+        box-shadow:0 10px 30px -8px rgba(31,59,94,.18);
+        overflow:hidden;
+        position:relative;
+    }
+    .id-card::before{
+        content:"";position:absolute;top:0;left:0;right:0;height:64px;
+        background:linear-gradient(120deg,#1f3b5e,#2f5788);
+        z-index:0;
+    }
+    .id-card-header{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 16px 6px}
+    .id-card-header .school-logo{width:46px;height:46px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .id-card-header h2{color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.02em;text-align:center;margin:4px 0 0;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+    .id-card-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:10px 20px 22px}
+    .id-card-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.18);margin-top:-30px;background:#fff}
+    .id-card-details{text-align:center;margin-top:10px}
+    .id-card-details p{margin:2px 0;font-size:.88rem;color:#344054}
+    .id-card-details p:first-child{font-size:1.05rem;font-weight:700;color:#1f2d3d;margin-bottom:4px}
+    .id-card-qr{margin-top:14px;padding:10px;background:#fff;border:1px solid #eef1f5;border-radius:12px}
+    .id-card-qr img{width:120px;height:120px;display:block}
+
+    /* ---- Mobile top nav (jump to sections) ---- */
+    .sd-topnav{
+        display:none;position:sticky;top:0;z-index:40;
+        background:#fff;border-bottom:1px solid #e6ebf1;
+        overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;
+        padding:8px 10px;margin:0 0 14px;
+    }
+    .sd-topnav::-webkit-scrollbar{display:none}
+    .sd-topnav a{
+        display:inline-block;padding:7px 13px;margin-right:6px;
+        background:#f4f6f9;color:#1f3b5e;border-radius:999px;
+        font-size:.8rem;font-weight:600;text-decoration:none;white-space:nowrap;
+    }
+    .sd-topnav a:active{background:#1f3b5e;color:#fff}
+    @media (max-width:900px){ .sd-topnav{display:block} }
+</style>
+
+<nav class="sd-topnav" aria-label="Jump to section">
+    <a href="#sec-info">Student Information</a>
+    <a href="#sec-parents">Parents / Guardian</a>
+    <a href="#sec-address">Community & Address</a>
+    <a href="#sec-pocket">Pocket Money</a>
+    <a href="#sec-card">Student's Card</a>
+    <a href="#sec-lost">Lost Items</a>
+</nav>
+
 <div class="detail-layout">
 
     <div class="detail-main">
@@ -19,36 +95,57 @@
             </div>
         </div>
 
-        <fieldset>
+        <fieldset id="sec-info">
             <legend>Student Information</legend>
-            <dl>
-                <dt>Student Number</dt><dd>{{ student.student_number }}</dd>
-                <dt>Date of Birth</dt><dd>{{ student.date_of_birth }} (Age {{ student.age }})</dd>
-            </dl>
+            <div class="sd-grid">
+                <div class="sd-item"><small>Student Number</small><div class="v big">{{ student.student_number }}</div></div>
+                <div class="sd-item"><small>Class</small><div class="v">{{ student.get_grade_class_display }}</div></div>
+                <div class="sd-item"><small>Date of Birth</small><div class="v">{{ student.date_of_birth|date:"d M Y" }}</div></div>
+                <div class="sd-item"><small>Age</small><div class="v">{{ student.age }} years</div></div>
+                <div class="sd-item"><small>Status</small><div class="v">{{ student.get_status_display }}</div></div>
+                <div class="sd-item"><small>Enrolled</small><div class="v">{{ student.enrollment_date|date:"d M Y" }}</div></div>
+            </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset id="sec-parents">
             <legend>Parents / Guardian</legend>
-            <dl>
-                <dt>Father</dt><dd>{{ student.father_name|default:"—" }} {{ student.father_phone }}</dd>
-                <dt>Mother</dt><dd>{{ student.mother_name|default:"—" }} {{ student.mother_phone }}</dd>
-                <dt>Guardian</dt><dd>{{ student.guardian_name|default:"—" }} ({{ student.guardian_relationship|default:"—" }}) {{ student.guardian_phone }}</dd>
-            </dl>
+            <div class="sd-people">
+                <div class="sd-person">
+                    <div class="sd-role">Father</div>
+                    <div class="sd-pname">{% if student.father_name %}{{ student.father_name }}{% else %}<span class="sd-muted">Not recorded</span>{% endif %}</div>
+                    {% if student.father_phone %}<div class="sd-line"><small>Phone</small><a href="tel:{{ student.father_phone }}">{{ student.father_phone }}</a></div>{% endif %}
+                    {% if student.father_whatsapp %}<div class="sd-line"><small>WhatsApp</small>{{ student.father_whatsapp }}</div>{% endif %}
+                </div>
+                <div class="sd-person">
+                    <div class="sd-role">Mother</div>
+                    <div class="sd-pname">{% if student.mother_name %}{{ student.mother_name }}{% else %}<span class="sd-muted">Not recorded</span>{% endif %}</div>
+                    {% if student.mother_phone %}<div class="sd-line"><small>Phone</small><a href="tel:{{ student.mother_phone }}">{{ student.mother_phone }}</a></div>{% endif %}
+                    {% if student.mother_whatsapp %}<div class="sd-line"><small>WhatsApp</small>{{ student.mother_whatsapp }}</div>{% endif %}
+                </div>
+                <div class="sd-person full">
+                    <div class="sd-role">Guardian{% if student.guardian_relationship %} · {{ student.guardian_relationship }}{% endif %}</div>
+                    <div class="sd-pname">{% if student.guardian_name %}{{ student.guardian_name }}{% else %}<span class="sd-muted">Not recorded</span>{% endif %}</div>
+                    {% if student.guardian_phone %}<div class="sd-line"><small>Phone</small><a href="tel:{{ student.guardian_phone }}">{{ student.guardian_phone }}</a></div>{% endif %}
+                </div>
+            </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset id="sec-address">
             <legend>Community &amp; Address</legend>
-            <dl>
-                <dt>Parish</dt><dd>{{ student.parish|default:"—" }}</dd>
-                <dt>Address</dt><dd>{{ student.full_address|default:"—" }}, {{ student.ward }}, {{ student.district }}, {{ student.region }}</dd>
-                <dt>Registered By</dt>
-                <dd>{% if student.added_by %}{{ student.added_by.get_full_name|default:student.added_by.username }}{% else %}—{% endif %}</dd>
-            </dl>
+            <div class="sd-grid">
+                <div class="sd-item full"><small>Parish</small><div class="v">{{ student.parish|default:"—" }}</div></div>
+                <div class="sd-item"><small>Region</small><div class="v">{{ student.region|default:"—" }}</div></div>
+                <div class="sd-item"><small>District</small><div class="v">{{ student.district|default:"—" }}</div></div>
+                <div class="sd-item"><small>Ward</small><div class="v">{{ student.ward|default:"—" }}</div></div>
+                <div class="sd-item"><small>Registered by</small>
+                    <div class="v">{% if student.added_by %}{{ student.added_by.get_full_name|default:student.added_by.username }}{% else %}—{% endif %}</div></div>
+                <div class="sd-item full"><small>Full address</small><div class="v">{{ student.full_address|default:"—" }}</div></div>
+            </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset id="sec-pocket">
             <legend>Pocket Money</legend>
-            <p><a href="{% url 'pocketmoney:detail' student.pk %}" class="btn btn-secondary">View Balance &amp; Transactions</a></p>
+            <p style="margin:6px 0 4px"><a href="{% url 'pocketmoney:detail' student.pk %}" class="btn btn-secondary">View Balance &amp; Transactions</a></p>
         </fieldset>
 
         <div class="qr-actions">
@@ -59,7 +156,7 @@
         </div>
     </div>
 
-    <div class="detail-canvas">
+    <div class="detail-canvas" id="sec-card">
         <div class="id-card">
             <div class="id-card-header">
                 <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'img/school_logo.png' %}{% endif %}" alt="Logo" class="school-logo">
@@ -70,12 +167,19 @@
                     <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo">
                 {% endif %}
                 <div class="id-card-details">
-                    <p><strong>{{ student.full_name }}</strong></p>
+                    <p>{{ student.full_name }}</p>
                     <p>No: {{ student.student_number }}</p>
                     <p>Class: {{ student.get_grade_class_display }}</p>
                     <p>Parish: {{ student.parish|default:"—" }}</p>
+                    <p>Valid until:
+                        {% if student.status == 'graduated' %}No expiry
+                        {% elif card.valid_until %}{{ card.valid_until|date:"d F Y" }}
+                        {% else %}—{% endif %}
+                    </p>
                 </div>
-                {% if card.qr_image %}
+                {% if card.is_expired %}
+                <div class="id-card-qr"><strong style="color:#b91c1c">EXPIRED</strong></div>
+                {% elif card.qr_image %}
                 <div class="id-card-qr">
                     <img src="{{ card.qr_image.url }}" alt="QR code">
                 </div>
@@ -83,10 +187,8 @@
             </div>
         </div>
 
-        <div class="qr-preview-box">
-            {% if card.qr_image %}
-                <img src="{{ card.qr_image.url }}" alt="QR code" class="qr-image">
-            {% endif %}
+        <div id="sec-lost">
+            {% lost_items_panel student %}
         </div>
 
         <div class="qr-actions">
@@ -102,4 +204,20 @@
     </div>
 
 </div>
+
+<script>
+    // Smooth-scroll + account for the sticky top nav's own height
+    document.querySelectorAll('.sd-topnav a').forEach(function(link){
+        link.addEventListener('click', function(e){
+            var id = this.getAttribute('href').slice(1);
+            var target = document.getElementById(id);
+            if (!target) return;
+            e.preventDefault();
+            var nav = document.querySelector('.sd-topnav');
+            var offset = (nav ? nav.offsetHeight : 0) + 8;
+            var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+        });
+    });
+</script>
 {% endblock %}

@@ -5,13 +5,14 @@ from apps.students.models import Student
 
 def verify_student(request, student_number):
     """
-    Public page shown when someone scans a student's QR code.
-    No login required (by design, for now) so anyone with the
-    physical card can verify the holder's identity at a glance.
-
-    This will be locked down later (see project notes) by wrapping
-    this view with @login_required or adding a token/signature check
-    instead of a bare student_number lookup.
+    Public page shown when someone opens a student's verification link.
+    An expired card shows NOTHING about the student. Graduated students'
+    cards never expire.
     """
     student = get_object_or_404(Student, student_number=student_number)
+
+    card = getattr(student, 'id_card', None)     # None if no card exists yet
+    if card is not None and card.is_expired:
+        return render(request, 'verification/expired.html')
+
     return render(request, 'verification/scan_result.html', {'student': student})

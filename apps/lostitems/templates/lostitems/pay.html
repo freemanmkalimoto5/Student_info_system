@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+{% include 'lostitems/_styles.html' %}
+<div class="lp-page">
+  <div class="lp-card">
+    <h2>Record payment</h2>
+    <p class="lp-sub">{{ student.full_name }} ({{ student.student_number }}) · <b>{{ item.item_name }}</b></p>
+
+    <div class="lp-money">
+      <div><small>Price</small>TSh {{ item.price|floatformat:"0g" }}</div>
+      <div><small>Paid so far</small>TSh {{ item.amount_paid|floatformat:"0g" }}</div>
+      <div><small>Balance</small>TSh {{ item.balance|floatformat:"0g" }}</div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+      <div class="lp-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="lp-help">{{ field.help_text }}</div>{% endif %}
+        {% for e in field.errors %}<div class="lp-err">{{ e }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <div class="lp-row">
+        <button type="submit" class="li-btn ok">Save payment</button>
+        <a href="{% url 'students:detail' student.pk %}" class="li-btn ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  {% if item.payments.all %}
+  <div class="lp-card">
+    <h2 style="font-size:1.05rem">Previous payments</h2>
+    <table class="lp-table">
+      <thead><tr><th>Date</th><th class="num">Amount (TSh)</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for p in item.payments.all %}
+        <tr><td>{{ p.created_at|date:"d M Y" }}</td><td class="num">{{ p.amount|floatformat:"0g" }}</td><td>{{ p.note|default:"-" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

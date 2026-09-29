@@ -36,12 +36,17 @@ class StudentForm(forms.ModelForm):
 
 class CSVImportForm(forms.Form):
     csv_file = forms.FileField(
-        label='CSV File',
-        help_text='Upload a .csv file with columns matching the sample template.'
+        label='Student File',
+        help_text='Upload a .csv, .xlsx, .xlsm or .xls file with columns matching the sample template.',
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv,.xlsx,.xlsm,.xls'}),
     )
 
     def clean_csv_file(self):
+        from .import_utils import SUPPORTED_EXTENSIONS
         file = self.cleaned_data['csv_file']
-        if not file.name.lower().endswith('.csv'):
-            raise forms.ValidationError('Please upload a .csv file.')
+        name = file.name.lower()
+        if not name.endswith(SUPPORTED_EXTENSIONS):
+            raise forms.ValidationError(
+                'Please upload a .csv, .xlsx, .xlsm or .xls file.'
+            )
         return file
