@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from apps.accounts.decorators import admin_required, superuser_required
@@ -12,7 +13,6 @@ from .services import get_balance, add_transaction, get_recent_transactions, del
 
 
 def _can_view_student(user, student):
-    """Same ownership rule as the students app — admins see everyone, a parent only their own child."""
     if user.is_staff or user.is_superuser:
         return True
     parent_account = getattr(user, 'parent_account', None)
@@ -23,7 +23,6 @@ def _can_view_student(user, student):
 
 @login_required
 def detail(request, student_pk):
-    """Balance + transaction history. Viewable by admins and the student's own parent(s)."""
     student = get_object_or_404(Student, pk=student_pk)
     if not _can_view_student(request.user, student):
         raise PermissionDenied("You don't have access to this student's pocket money record.")
@@ -40,10 +39,27 @@ def detail(request, student_pk):
     })
 
 
+def _is_ajax(request):
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
 @admin_required
 def add(request, student_pk):
-    """Record a deposit or withdrawal. Admins only."""
+    """
+    Record a deposit or withdrawal. Admins only.
+
+    Two ways to call this:
+    - Normal browser form submit (the existing pocketmoney/add.html page):
+      works exactly as before, redirects to "next" or the Pocket Money
+      detail page on success.
+    - Fetch/AJAX (sends the X-Requested-With: XMLHttpRequest header, as
+      used by the quick Deposit/Withdraw panel on the student's own
+      profile page): returns JSON instead of redirecting, so that panel
+      can update the balance in place without leaving the page.
+    """
     student = get_object_or_404(Student, pk=student_pk)
+    next_url = request.POST.get('next') or request.GET.get('next')
+    ajax = _is_ajax(request)
 
     if request.method == 'POST':
         form = TransactionForm(request.POST)
@@ -56,10 +72,19 @@ def add(request, student_pk):
                     note=form.cleaned_data['note'],
                     user=request.user,
                 )
-                messages.success(request, "Transaction recorded successfully.")
-                return redirect('pocketmoney:detail', student_pk=student.pk)
             except ValueError as exc:
+                if ajax:
+                    return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
                 form.add_error(None, str(exc))
+            else:
+                new_balance = get_balance(student)
+                if ajax:
+                    return JsonResponse({'ok': True, 'balance': str(new_balance)})
+                messages.success(request, "Transaction recorded successfully.")
+                return redirect(next_url) if next_url else redirect('pocketmoney:detail', student_pk=student.pk)
+        elif ajax:
+            first_error = next(iter(form.errors.values()))[0] if form.errors else "Invalid amount."
+            return JsonResponse({'ok': False, 'error': first_error}, status=400)
     else:
         form = TransactionForm()
 
@@ -67,12 +92,12 @@ def add(request, student_pk):
         'form': form,
         'student': student,
         'balance': get_balance(student),
+        'next': next_url,
     })
 
 
 @superuser_required
 def delete(request, student_pk, transaction_pk):
-    """Delete one transaction. Superuser only — not even regular admins/clerks."""
     student = get_object_or_404(Student, pk=student_pk)
     transaction = get_object_or_404(Transaction, pk=transaction_pk, student=student)
 

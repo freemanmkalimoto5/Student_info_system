@@ -28,7 +28,34 @@
             </div>
             <div class="photo-upload-controls">
                 <label>Student Photo</label>
-                {{ form.photo }}
+
+
+
+                
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+
+    {{ form.photo }}
+
+    <button type="button" id="openCameraBtn" class="btn btn-secondary" style="white-space:nowrap;font-size:.85rem;padding:7px 14px">
+        📷 Take a Photo
+    </button>
+</div>
+
+<div id="cameraBox" style="display:none;margin-top:10px;max-width:320px">
+    <video id="cameraVideo" autoplay playsinline style="width:100%;border-radius:10px;background:#000"></video>
+    <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" id="captureBtn" class="btn" style="font-size:.85rem;padding:7px 14px">Capture</button>
+        <button type="button" id="closeCameraBtn" class="btn btn-secondary" style="font-size:.85rem;padding:7px 14px">Cancel</button>
+    </div>
+    <canvas id="cameraCanvas" style="display:none"></canvas>
+</div>
+
+<div id="cameraError" style="display:none;color:#b91c1c;font-size:.85rem;margin-top:6px"></div>
+
+
+
+
+
                 {% if form.photo.errors %}<p class="field-error">{{ form.photo.errors|striptags }}</p>{% endif %}
                 <p class="field-hint">A clear, front-facing photo works best — it appears on the printed ID card and the profile page.</p>
             </div>
@@ -152,4 +179,94 @@ document.addEventListener('DOMContentLoaded', function () {
     updateAge();
 });
 </script>
+
+
+
+
+<script>
+(function () {
+    // Adjust this ONLY if your photo field's real id is different from
+    // "id_photo" (right-click the "Choose File" button -> Inspect to check).
+    var photoInput = document.getElementById('id_photo');
+    var avatarImg = document.querySelector('.student-photo-placeholder, .avatar-preview, img[alt="Student Photo"]');
+
+    var openBtn = document.getElementById('openCameraBtn');
+    var closeBtn = document.getElementById('closeCameraBtn');
+    var captureBtn = document.getElementById('captureBtn');
+    var cameraBox = document.getElementById('cameraBox');
+    var video = document.getElementById('cameraVideo');
+    var canvas = document.getElementById('cameraCanvas');
+    var errorBox = document.getElementById('cameraError');
+    var stream = null;
+
+    if (!photoInput || !openBtn) return;   // markup didn't match -- fail silently, don't break the page
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+    }
+
+    openBtn.addEventListener('click', function () {
+        errorBox.style.display = 'none';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError('Camera access needs HTTPS or "localhost". Use "Choose File" instead.');
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+            .then(function (s) {
+                stream = s;
+                video.srcObject = stream;
+                cameraBox.style.display = 'block';
+            })
+            .catch(function (err) {
+                showError('Could not open the camera: ' + err.message + '. Use "Choose File" instead.');
+            });
+    });
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            stream = null;
+        }
+        cameraBox.style.display = 'none';
+    }
+
+    closeBtn.addEventListener('click', stopCamera);
+
+    // ---- Capture = the whole point: photo is taken AND put into the
+    // student photo field automatically, in this one click. No extra
+    // step, no separate "attach" action needed. ----
+    captureBtn.addEventListener('click', function () {
+        canvas.width = video.videoWidth || 480;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(function (blob) {
+            var fileName = 'student_photo_' + Date.now() + '.jpg';
+            var file = new File([blob], fileName, { type: 'image/jpeg' });
+
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            photoInput.files = dataTransfer.files;   // <-- this line is the "auto-fill"
+
+            if (avatarImg) {
+                var url = URL.createObjectURL(blob);
+                if (avatarImg.tagName === 'IMG') {
+                    avatarImg.src = url;
+                } else {
+                    avatarImg.style.backgroundImage = 'url(' + url + ')';
+                    avatarImg.style.backgroundSize = 'cover';
+                    avatarImg.textContent = '';
+                }
+            }
+
+            photoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            stopCamera();
+        }, 'image/jpeg', 0.9);
+    });
+})();
+</script>
+
+
+
 {% endblock %}

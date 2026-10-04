@@ -9,7 +9,11 @@
     .detail-main,.detail-canvas{width:auto !important;max-width:none !important;min-width:0 !important;flex:none !important}
     @media (max-width:900px){.detail-layout{grid-template-columns:1fr !important}}
 
-    /* ---- Student info sections ---- */
+    .detail-header{display:flex !important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .detail-header-left{display:flex;align-items:center;gap:14px;min-width:0}
+    .detail-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .student-photo{cursor:zoom-in}
+
     .sd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;padding:6px 4px 4px}
     .sd-item{min-width:0}
     .sd-item small{display:block;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8792a2;margin-bottom:3px}
@@ -28,7 +32,22 @@
     .sd-line small{color:#8792a2;margin-right:4px}
     @media (max-width:600px){.sd-grid,.sd-people{grid-template-columns:1fr}}
 
-    /* ---- ID card: nicer design ---- */
+    .pm-balance{background:linear-gradient(135deg,#1f3b5e,#2f5788);color:#fff;border-radius:12px;padding:14px 18px;margin:6px 0 12px}
+    .pm-balance small{display:block;color:#cbd8ea;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+    .pm-balance b{font-size:1.4rem}
+    .pm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+    .pm-btn{border:0;border-radius:8px;padding:8px 16px;font-weight:600;font-size:.88rem;cursor:pointer;color:#fff}
+    .pm-btn.deposit{background:#15803d}
+    .pm-btn.withdraw{background:#b45309}
+    .pm-quick{display:none;background:#f7f9fc;border:1px solid #e6ebf1;border-radius:10px;padding:12px;margin-top:8px}
+    .pm-quick.open{display:block}
+    .pm-quick input{width:100%;padding:9px 10px;border:1px solid #cbd3dc;border-radius:8px;margin:6px 0;font-size:.92rem;box-sizing:border-box}
+    .pm-quick .row{display:flex;gap:8px}
+    .pm-quick button{border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;color:#fff}
+    .pm-msg{font-size:.85rem;margin-top:6px}
+    .pm-msg.err{color:#b91c1c}
+    .pm-msg.ok{color:#15803d}
+
     .id-card{
         background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%);
         border:1px solid #e3e8ee !important;
@@ -42,18 +61,29 @@
         background:linear-gradient(120deg,#1f3b5e,#2f5788);
         z-index:0;
     }
+    .id-card-watermark{
+        position:absolute;inset:0;background-repeat:no-repeat;background-position:center 62%;
+        background-size:62%;opacity:.08;z-index:0;pointer-events:none;
+    }
     .id-card-header{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 16px 6px}
     .id-card-header .school-logo{width:46px;height:46px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .id-card-header h2{color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.02em;text-align:center;margin:4px 0 0;text-shadow:0 1px 2px rgba(0,0,0,.15)}
     .id-card-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:10px 20px 22px}
-    .id-card-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.18);margin-top:-30px;background:#fff}
+    .id-card-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.18);margin-top:-30px;background:#fff;cursor:zoom-in}
     .id-card-details{text-align:center;margin-top:10px}
     .id-card-details p{margin:2px 0;font-size:.88rem;color:#344054}
     .id-card-details p:first-child{font-size:1.05rem;font-weight:700;color:#1f2d3d;margin-bottom:4px}
     .id-card-qr{margin-top:14px;padding:10px;background:#fff;border:1px solid #eef1f5;border-radius:12px}
     .id-card-qr img{width:120px;height:120px;display:block}
 
-    /* ---- Mobile top nav (jump to sections) ---- */
+    .share-box{margin-top:14px;border:1px solid #e3e8ee;border-radius:12px;padding:14px 16px;background:#fff}
+    .share-box .title{font-weight:700;color:#1f2d3d;margin-bottom:8px;font-size:.92rem}
+    .share-row{display:flex;gap:8px;flex-wrap:wrap}
+    .share-btn{display:flex;align-items:center;gap:6px;border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:.85rem;cursor:pointer;color:#fff;text-decoration:none}
+    .share-btn.wa{background:#128c7e}
+    .share-btn.email{background:#334155}
+    .share-btn.native{background:#1f3b5e}
+
     .sd-topnav{
         display:none;position:sticky;top:0;z-index:40;
         background:#fff;border-bottom:1px solid #e6ebf1;
@@ -83,16 +113,24 @@
 
     <div class="detail-main">
         <div class="detail-header">
-            {% if student.photo %}
-                <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="student-photo">
-            {% else %}
-                <div class="student-photo student-photo-placeholder">No Photo</div>
-            {% endif %}
-            <div>
-                <h1>{{ student.full_name }}</h1>
-                <span class="badge badge-success">{{ student.get_status_display }}</span>
-                <span class="badge badge-warning">{{ student.get_grade_class_display }}</span>
+            <div class="detail-header-left">
+                {% if student.photo %}
+                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="student-photo" onclick="openLightbox(this.src)">
+                {% else %}
+                    <div class="student-photo student-photo-placeholder">No Photo</div>
+                {% endif %}
+                <div>
+                    <h1>{{ student.full_name }}</h1>
+                    <span class="badge badge-success">{{ student.get_status_display }}</span>
+                    <span class="badge badge-warning">{{ student.get_grade_class_display }}</span>
+                </div>
             </div>
+            {% if user.is_staff or user.is_superuser %}
+            <div class="detail-header-actions">
+                <a href="{% url 'students:update' student.pk %}" class="btn btn-secondary">Edit</a>
+                <a href="{% url 'students:delete' student.pk %}" class="btn btn-danger">Delete</a>
+            </div>
+            {% endif %}
         </div>
 
         <fieldset id="sec-info">
@@ -145,26 +183,60 @@
 
         <fieldset id="sec-pocket">
             <legend>Pocket Money</legend>
-            <p style="margin:6px 0 4px"><a href="{% url 'pocketmoney:detail' student.pk %}" class="btn btn-secondary">View Balance &amp; Transactions</a></p>
-        </fieldset>
-
-        <div class="qr-actions">
+            <div class="pm-balance">
+                <small>Available balance</small>
+                <b id="pmBalanceDisplay">TSh {{ pocket_balance|default:0|floatformat:"0g" }}</b>
+            </div>
             {% if user.is_staff or user.is_superuser %}
-                <a href="{% url 'students:update' student.pk %}" class="btn btn-secondary">Edit</a>
-                <a href="{% url 'students:delete' student.pk %}" class="btn btn-danger">Delete</a>
+            <div class="pm-actions">
+                <button type="button" class="pm-btn deposit" onclick="togglePM('deposit')">+ Deposit</button>
+                <button type="button" class="pm-btn withdraw" onclick="togglePM('withdraw')">− Withdraw</button>
+            </div>
+
+            <div id="pmQuickDeposit" class="pm-quick">
+                <form id="pmFormDeposit" data-type="deposit">
+                    <input type="hidden" name="transaction_type" value="deposit">
+                    <label style="font-size:.85rem;font-weight:600">Amount to deposit (TSh)</label>
+                    <input type="number" name="amount" min="0.01" step="0.01" required>
+                    <input type="text" name="note" placeholder="Note (optional)">
+                    <div class="row">
+                        <button type="submit" style="background:#15803d">Save deposit</button>
+                        <button type="button" style="background:#6b7785" onclick="togglePM('deposit')">Cancel</button>
+                    </div>
+                    <div class="pm-msg" id="pmMsgDeposit"></div>
+                </form>
+            </div>
+
+            <div id="pmQuickWithdraw" class="pm-quick">
+                <form id="pmFormWithdraw" data-type="withdrawal">
+                    <input type="hidden" name="transaction_type" value="withdrawal">
+                    <label style="font-size:.85rem;font-weight:600">Amount to withdraw (TSh)</label>
+                    <input type="number" name="amount" min="0.01" step="0.01" required>
+                    <input type="text" name="note" placeholder="Note (optional)">
+                    <div class="row">
+                        <button type="submit" style="background:#b45309">Save withdrawal</button>
+                        <button type="button" style="background:#6b7785" onclick="togglePM('withdraw')">Cancel</button>
+                    </div>
+                    <div class="pm-msg" id="pmMsgWithdraw"></div>
+                </form>
+            </div>
             {% endif %}
-        </div>
+            <p style="margin:10px 0 0"><a href="{% url 'pocketmoney:detail' student.pk %}" class="btn btn-secondary">View Full Balance &amp; Transaction History</a></p>
+        </fieldset>
     </div>
 
     <div class="detail-canvas" id="sec-card">
         <div class="id-card">
+            {% if site_settings.logo %}
+            <div class="id-card-watermark" style="background-image:url('{{ site_settings.logo.url }}')"></div>
+            {% endif %}
             <div class="id-card-header">
                 <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'img/school_logo.png' %}{% endif %}" alt="Logo" class="school-logo">
                 <h2>{{ site_settings.school_name }}</h2>
             </div>
             <div class="id-card-body">
                 {% if student.photo %}
-                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo">
+                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="id-card-photo" onclick="openLightbox(this.src)">
                 {% endif %}
                 <div class="id-card-details">
                     <p>{{ student.full_name }}</p>
@@ -187,13 +259,7 @@
             </div>
         </div>
 
-        <div id="sec-lost">
-            {% lost_items_panel student %}
-        </div>
-
         <div class="qr-actions">
-            <a href="{% url 'qrcodes:print' student.pk %}" class="btn">Print ID Card</a>
-            <a href="{% url 'qrcodes:download_pdf' student.pk %}" class="btn btn-secondary">Download PDF</a>
             {% if user.is_staff or user.is_superuser %}
                 <form method="post" action="{% url 'qrcodes:regenerate' student.pk %}">
                     {% csrf_token %}
@@ -201,12 +267,30 @@
                 </form>
             {% endif %}
         </div>
+
+        <div class="share-box">
+            <div class="title">Share this ID card</div>
+            <div class="share-row">
+                <a class="share-btn wa" id="shareWhatsApp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+                <a class="share-btn email" id="shareEmail" href="#">Email</a>
+                <button type="button" class="share-btn native" id="shareNative" style="display:none">Share…</button>
+            </div>
+        </div>
+
+        <div id="sec-lost">
+            {% lost_items_panel student %}
+        </div>
     </div>
 
 </div>
 
+<div id="lightboxOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out"
+     onclick="closeLightbox()">
+    <img id="lightboxImg" src="" style="max-width:92vw;max-height:92vh;border-radius:10px">
+</div>
+
 <script>
-    // Smooth-scroll + account for the sticky top nav's own height
+    // ---- smooth-scroll for the mobile jump nav ----
     document.querySelectorAll('.sd-topnav a').forEach(function(link){
         link.addEventListener('click', function(e){
             var id = this.getAttribute('href').slice(1);
@@ -219,5 +303,134 @@
             window.scrollTo({ top: top, behavior: 'smooth' });
         });
     });
+
+    // ---- full-image lightbox ----
+    function openLightbox(src){
+        document.getElementById('lightboxImg').src = src;
+        document.getElementById('lightboxOverlay').style.display = 'flex';
+    }
+    function closeLightbox(){
+        document.getElementById('lightboxOverlay').style.display = 'none';
+    }
+
+    // ---- pocket money: quick deposit/withdraw, submitted WITHOUT leaving this page ----
+    function togglePM(which){
+        var id = which === 'deposit' ? 'pmQuickDeposit' : 'pmQuickWithdraw';
+        var other = which === 'deposit' ? 'pmQuickWithdraw' : 'pmQuickDeposit';
+        document.getElementById(other).classList.remove('open');
+        document.getElementById(id).classList.toggle('open');
+    }
+
+    function getCookie(name) {
+        var value = '; ' + document.cookie;
+        var parts = value.split('; ' + name + '=');
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    function wirePocketMoneyForm(formId, msgId) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var originalLabel = submitBtn ? submitBtn.textContent : '';
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Lock the button IMMEDIATELY -- before the network request
+            // even starts -- so a fast double-click/double-tap can never
+            // fire two transactions for the same amount.
+            if (submitBtn.disabled) return;   // already saving -- ignore
+            submitBtn.disabled = true;
+            submitBtn.textContent = '🚫 Saving…';
+
+            var msg = document.getElementById(msgId);
+            msg.textContent = '';
+            msg.className = 'pm-msg';
+
+            var data = new FormData(form);
+            data.append('next', window.location.pathname);
+
+            fetch("{% url 'pocketmoney:add' student.pk %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' },
+                body: data,
+            })
+            .then(function (res) { return res.json().catch(function () { return null; }); })
+            .then(function (payload) {
+                if (payload && payload.ok) {
+                    document.getElementById('pmBalanceDisplay').textContent =
+                        'TSh ' + Number(payload.balance).toLocaleString();
+                    msg.textContent = 'Saved.';
+                    msg.className = 'pm-msg ok';
+                    form.reset();
+                    setTimeout(function () {
+                        document.getElementById(formId.includes('Deposit') ? 'pmQuickDeposit' : 'pmQuickWithdraw')
+                                .classList.remove('open');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalLabel;
+                    }, 700);
+                } else {
+                    msg.textContent = (payload && payload.error) ? payload.error :
+                        'Could not save (this quick form needs the JSON-aware pocketmoney view).';
+                    msg.className = 'pm-msg err';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                }
+            })
+            .catch(function () {
+                msg.textContent = 'Network error -- please try again.';
+                msg.className = 'pm-msg err';
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+            });
+        });
+    }
+
+
+    wirePocketMoneyForm('pmFormDeposit', 'pmMsgDeposit');
+    wirePocketMoneyForm('pmFormWithdraw', 'pmMsgWithdraw');
+
+    // ---- share the ID card ----
+    (function(){
+        var studentName = "{{ student.full_name|escapejs }}";
+        var studentNumber = "{{ student.student_number|escapejs }}";
+        var schoolName = "{{ site_settings.school_name|default:''|escapejs }}";
+        var pdfUrl = window.location.origin + "{% url 'qrcodes:download_pdf' student.pk %}";
+        var cardUrl = window.location.origin + "{% url 'qrcodes:preview' student.pk %}";
+
+        var message = "Student ID Card - " + schoolName + "\n" +
+                       studentName + " (" + studentNumber + ")\n" +
+                       "View / download: " + pdfUrl;
+
+        var waLink = document.getElementById('shareWhatsApp');
+        waLink.href = "https://wa.me/?text=" + encodeURIComponent(message);
+
+        var emailLink = document.getElementById('shareEmail');
+        var subject = "Student ID Card - " + studentName;
+        emailLink.href = "mailto:?subject=" + encodeURIComponent(subject) +
+                          "&body=" + encodeURIComponent(message);
+
+        var nativeBtn = document.getElementById('shareNative');
+        if (navigator.share) {
+            nativeBtn.style.display = 'inline-flex';
+            nativeBtn.addEventListener('click', function(){
+                if (navigator.canShare && window.fetch) {
+                    fetch(pdfUrl).then(function(res){ return res.blob(); }).then(function(blob){
+                        var file = new File([blob], "id_card_" + studentNumber + ".pdf", { type: 'application/pdf' });
+                        if (navigator.canShare({ files: [file] })) {
+                            navigator.share({ title: subject, text: message, files: [file] }).catch(function(){});
+                            return;
+                        }
+                        navigator.share({ title: subject, text: message, url: cardUrl }).catch(function(){});
+                    }).catch(function(){
+                        navigator.share({ title: subject, text: message, url: cardUrl }).catch(function(){});
+                    });
+                } else {
+                    navigator.share({ title: subject, text: message, url: cardUrl }).catch(function(){});
+                }
+            });
+        }
+    })();
 </script>
 {% endblock %}

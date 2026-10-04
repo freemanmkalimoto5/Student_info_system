@@ -14,6 +14,7 @@ class SiteSettings(models.Model):
     logo = models.ImageField(upload_to='site/', blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    website = models.URLField(blank=True, null=True, help_text="Shown on the student verification page, e.g. https://yourschool.ac.tz")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

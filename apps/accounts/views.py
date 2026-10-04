@@ -3,6 +3,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseNotAllowed
 
 from .decorators import admin_required, full_admin_required, superuser_required, is_clerk
 from .forms import SiteSettingsForm, AddAdminForm, AdminProfileForm, ClerkSettingsForm
@@ -40,6 +41,9 @@ def settings_view(request):
         return _clerk_settings(request)
 
     site_settings = SiteSettings.load()
+    profile, _ = AdminProfile.objects.get_or_create(
+        user=request.user, defaults={'profile_completed': True}
+    )
     if request.method == 'POST':
         form = SiteSettingsForm(request.POST, request.FILES, instance=site_settings)
         if form.is_valid():
@@ -49,7 +53,11 @@ def settings_view(request):
     else:
         form = SiteSettingsForm(instance=site_settings)
 
-    return render(request, 'accounts/settings.html', {'form': form})
+    return render(request, 'accounts/settings.html', {
+        'form': form,
+        'current_theme': profile.theme,
+        'theme_choices': AdminProfile.THEME_CHOICES,
+    })
 
 
 def _clerk_settings(request):
@@ -168,3 +176,27 @@ def audit_log_clear_all(request):
     return render(request, 'accounts/audit_log_confirm_clear.html', {
         'count': AuditLog.objects.count(),
     })
+
+
+
+@login_required
+def set_theme(request):
+    """Saves the caller's own theme choice (Light / Dark / Match System)
+    and sends them back wherever they came from."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    theme = request.POST.get('theme', '')
+    valid_values = {key for key, _label in AdminProfile.THEME_CHOICES}
+    if theme not in valid_values:
+        messages.error(request, "Unknown theme choice.")
+    else:
+        profile, _ = AdminProfile.objects.get_or_create(
+            user=request.user, defaults={'profile_completed': True}
+        )
+        profile.theme = theme
+        profile.save(update_fields=['theme'])
+        messages.success(request, "Theme updated.")
+
+    next_url = request.POST.get('next') or 'accounts:settings'
+    return redirect(next_url)

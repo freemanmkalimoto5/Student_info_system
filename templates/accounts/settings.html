@@ -5,6 +5,34 @@
 <h1>System Settings</h1>
 
 <fieldset>
+    <legend>Appearance</legend>
+    <p>Choose how the system looks on this account. "Match System" follows your device's own light/dark setting automatically.</p>
+    <form method="post" action="{% url 'accounts:set_theme' %}" class="theme-picker">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'accounts:settings' %}">
+        <div class="theme-options">
+            {% for key, label in theme_choices %}
+            <label class="theme-option {% if current_theme == key %}selected{% endif %}">
+                <input type="radio" name="theme" value="{{ key }}" {% if current_theme == key %}checked{% endif %} onchange="this.form.submit()">
+                <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <noscript><button type="submit">Save Theme</button></noscript>
+    </form>
+</fieldset>
+<style>
+  .theme-options{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .theme-option{border:1px solid #cbd3dc;border-radius:10px;padding:10px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}
+  .theme-option.selected{border-color:#3b82f6;background:rgba(59,130,246,.08)}
+  .theme-option input{margin:0}
+  body[data-theme="dark"] .theme-option, body[data-theme="system"] .theme-option{border-color:#334155;color:#f1f5f9}
+  body[data-theme="dark"] .theme-option.selected, body[data-theme="system"] .theme-option.selected{border-color:#3b82f6;background:rgba(59,130,246,.18)}
+  .superuser-only-msg{display:none;margin-top:14px;padding:12px 16px;border-radius:10px;font-weight:800;letter-spacing:.05em;
+    background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+</style>
+
+<fieldset>
     <legend>School Branding</legend>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -31,6 +59,7 @@
             <div class="field">{{ form.logo.label_tag }} {{ form.logo }}</div>
             <div class="field">{{ form.contact_email.label_tag }} {{ form.contact_email }}</div>
             <div class="field">{{ form.contact_phone.label_tag }} {{ form.contact_phone }}</div>
+            <div class="field">{{ form.website.label_tag }} {{ form.website }}</div>
         </div>
         <button type="submit">Save Settings</button>
     </form>
@@ -49,11 +78,15 @@
     <legend>System Access</legend>
     <p>These open the full Django admin panel for deeper management.</p>
     <div class="settings-links">
-        <a href="/admin/" class="btn">Django Admin Panel</a>
-        <a href="/admin/auth/user/" class="btn btn-secondary">Manage Staff Accounts</a>
-        <a href="/admin/students/student/" class="btn btn-secondary">Manage Students</a>
-        <a href="/admin/qrcodes/idcard/" class="btn btn-secondary">Manage ID Cards</a>
+        {# Superuser: real links. Anyone else: the same buttons, but a click only shows "SUPERUSER ONLY" (no 403 page). #}
+        <a {% if user.is_superuser %}href="/admin/"{% else %}href="#" data-superuser-only{% endif %} class="btn">Django Admin Panel</a>
+        <a {% if user.is_superuser %}href="/admin/auth/user/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage Staff Accounts</a>
+        <a {% if user.is_superuser %}href="/admin/students/student/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage Students</a>
+        <a {% if user.is_superuser %}href="/admin/qrcodes/idcard/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage ID Cards</a>
     </div>
+    {% if not user.is_superuser %}
+    <div id="superuser-only-msg" class="superuser-only-msg" role="alert">SUPERUSER ONLY</div>
+    {% endif %}
 </fieldset>
 {% endblock %}
 
@@ -63,18 +96,31 @@ document.addEventListener('DOMContentLoaded', function () {
     var logoInput = document.getElementById('id_logo');
     var previewImg = document.getElementById('logo-preview-new');
     var placeholder = document.getElementById('logo-preview-placeholder-new');
-    if (!logoInput || !previewImg || !placeholder) return;
+    if (logoInput && previewImg && placeholder) {
+        logoInput.addEventListener('change', function () {
+            var file = logoInput.files && logoInput.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
-    logoInput.addEventListener('change', function () {
-        var file = logoInput.files && logoInput.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            previewImg.src = e.target.result;
-            previewImg.style.display = 'block';
-            placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
+    // Non-superusers: show "SUPERUSER ONLY" instead of opening the admin panel.
+    var msg = document.getElementById('superuser-only-msg');
+    var hideTimer = null;
+    document.querySelectorAll('[data-superuser-only]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            if (!msg) return;
+            msg.style.display = 'block';
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(function () { msg.style.display = 'none'; }, 4000);
+        });
     });
 });
 </script>

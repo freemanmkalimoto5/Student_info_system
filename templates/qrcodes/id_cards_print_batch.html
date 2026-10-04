@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{ label }} - ID Cards</title>
+<style>
+  body{font-family:system-ui,Arial;margin:20px;color:#1f2d3d}
+  h1{font-size:1.2rem;border-bottom:2px solid #1f3b5e;padding-bottom:8px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+  .class-h{grid-column:1/-1;margin:18px 0 4px;font-weight:700;color:#1f3b5e;border-top:1px solid #ccc;padding-top:10px}
+  @media print{.no-print{display:none}}
+
+  .id-card{background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%);border:1px solid #e3e8ee;border-radius:14px;
+    overflow:hidden;position:relative;page-break-inside:avoid}
+  .id-card::before{content:"";position:absolute;top:0;left:0;right:0;height:50px;
+    background:linear-gradient(120deg,#1f3b5e,#2f5788);z-index:0}
+  .id-card-header{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 8px 4px}
+  .id-card-header img{width:30px;height:30px;border-radius:50%;background:#fff;padding:3px}
+  .id-card-header h2{color:#fff;font-size:.7rem;font-weight:700;text-align:center;margin:2px 0 0}
+  .id-card-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:6px 10px 14px}
+  .id-card-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-top:-18px;background:#fff}
+  .id-card-details p{margin:1px 0;font-size:.68rem;color:#344054;text-align:center}
+  .id-card-details p:first-child{font-size:.78rem;font-weight:700;color:#1f2d3d}
+  .id-card-qr img{width:64px;height:64px;margin-top:6px}
+</style></head>
+<body>
+  <div class="no-print" style="margin-bottom:14px">
+    <button onclick="window.print()">Print</button>
+  </div>
+  <h1>{{ label }} - ID Cards</h1>
+  <div class="grid">
+  {% for s in students %}
+    {% ifchanged s.grade_class %}<div class="class-h">{{ s.get_grade_class_display }}</div>{% endifchanged %}
+    <div class="id-card">
+      <div class="id-card-header">
+        {% if site_settings.logo %}<img src="{{ site_settings.logo.url }}">{% endif %}
+        <h2>{{ site_settings.school_name }}</h2>
+      </div>
+      <div class="id-card-body">
+        {% if s.photo %}<img src="{{ s.photo.url }}" class="id-card-photo">{% endif %}
+        <div class="id-card-details">
+          <p>{{ s.full_name }}</p>
+          <p>No: {{ s.student_number }}</p>
+          <p>{{ s.get_grade_class_display }}</p>
+        </div>
+        {% if s.card and s.card.qr_image and not s.card.is_expired %}
+        <div class="id-card-qr"><img src="{{ s.card.qr_image.url }}"></div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+</body></html>

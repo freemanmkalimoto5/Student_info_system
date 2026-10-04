@@ -7,7 +7,8 @@ from .models import SiteSettings, AdminProfile
 class SiteSettingsForm(forms.ModelForm):
     class Meta:
         model = SiteSettings
-        fields = ['school_name', 'logo', 'contact_email', 'contact_phone']
+        fields = ['school_name', 'logo', 'contact_email', 'contact_phone', 'website']
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

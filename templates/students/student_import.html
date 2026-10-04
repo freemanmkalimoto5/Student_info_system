@@ -51,5 +51,43 @@
     </div>
 </div>
 
+<fieldset>
+    <legend>Students already in the system</legend>
+    <p class="field-hint">
+        Download everyone as an Excel file, correct what needs correcting, then bring it back with
+        "Replace existing details". Only students whose details really changed are edited, identical
+        students are skipped, and students who are not in the system yet are added.
+    </p>
+    <div class="settings-links">
+        <a href="{% url 'students:export' %}" class="btn">Download a file</a>
+        <button type="button" class="btn btn-secondary" id="replace-toggle">Replace existing details</button>
+    </div>
+
+    <div id="replace-box" style="display:none;margin-top:14px">
+        <div class="upload-card">
+            <form method="post" action="{% url 'students:replace' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="upload-icon">📝</div>
+                <input type="file" name="csv_file" accept=".csv,.xlsx,.xlsm,.xls" required>
+                <p class="field-hint">Use the file from "Download a file". Leave <code>student_number</code> as it is — it helps the system recognise each student.</p>
+                <button type="submit" class="btn">Upload &amp; Update</button>
+            </form>
+        </div>
+    </div>
+</fieldset>
+
 <p><a href="{% url 'students:list' %}" class="btn btn-secondary">Back to Student List</a></p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var toggle = document.getElementById('replace-toggle');
+    var box = document.getElementById('replace-box');
+    if (!toggle || !box) return;
+    toggle.addEventListener('click', function () {
+        box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+    });
+});
+</script>
 {% endblock %}

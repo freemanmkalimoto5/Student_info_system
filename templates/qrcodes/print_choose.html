@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .pc-wrap{max-width:420px}
+  .pc-wrap select{width:100%;padding:10px 12px;border:1px solid #cbd3dc;border-radius:9px;margin:10px 0 18px;font-size:1rem}
+  .pc-row{display:flex;gap:10px}
+  .pc-btn{flex:1;text-align:center;padding:10px 14px;border:0;border-radius:9px;font-weight:600;cursor:pointer;text-decoration:none;color:#fff}
+  .pc-btn.print{background:#1f3b5e}
+  .pc-btn.download{background:#15803d}
+</style>
+<div class="pc-wrap">
+  <h2>{% if mode == 'cards' %}ID Cards{% else %}QR Codes{% endif %}</h2>
+  <p>Choose a class, or leave it as "All students".</p>
+  <select id="pcClass">
+    <option value="">All students</option>
+    {% for key, label in class_choices %}
+      <option value="{{ key }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <div class="pc-row">
+    <a id="pcPrint" class="pc-btn print"
+       href="{% if mode == 'cards' %}{% url 'qrcodes:id_cards_print_batch' %}{% else %}{% url 'qrcodes:print_batch' %}{% endif %}"
+       target="_blank">Print</a>
+    <a id="pcDownload" class="pc-btn download"
+       href="{% if mode == 'cards' %}{% url 'qrcodes:id_cards_download_batch_pdf' %}{% else %}{% url 'qrcodes:download_batch_pdf' %}{% endif %}">Download PDF</a>
+  </div>
+</div>
+<script>
+  const sel = document.getElementById('pcClass');
+  const printLink = document.getElementById('pcPrint');
+  const downloadLink = document.getElementById('pcDownload');
+  const printBase = printLink.getAttribute('href');
+  const downloadBase = downloadLink.getAttribute('href');
+  function update() {
+    const q = sel.value ? ('?class=' + encodeURIComponent(sel.value)) : '';
+    printLink.setAttribute('href', printBase + q);
+    downloadLink.setAttribute('href', downloadBase + q);
+  }
+  sel.addEventListener('change', update);
+  update();
+</script>
+{% endblock %}

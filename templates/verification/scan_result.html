@@ -1,27 +1,124 @@
-{% extends 'base.html' %}
-{% block title %}Verify Student{% endblock %}
-{% block back_button %}{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ student.full_name }} — {{ site_settings.school_name }}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#eef1f5;color:#1f2d3d}
+  .wrap{max-width:460px;margin:0 auto;min-height:100vh;background:#fff;position:relative;overflow:hidden}
+  .watermark{position:absolute;inset:0;background-repeat:no-repeat;background-position:center 40%;
+    background-size:70%;opacity:.06;z-index:0;pointer-events:none}
+  .content{position:relative;z-index:1}
+  .header{background:linear-gradient(120deg,#1f3b5e,#2f5788);color:#fff;padding:22px 20px 60px;text-align:center}
+  .header img.logo{width:56px;height:56px;border-radius:50%;background:#fff;padding:5px;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+  .header h1{font-size:1.05rem;margin:10px 0 2px}
+  .header p{margin:0;font-size:.78rem;opacity:.85}
 
-{% block content %}
-<div class="verify-card">
-    <div class="verify-badge">✓ Verified</div>
+  .photo-wrap{margin:-46px auto 0;width:96px;height:96px;border-radius:50%;background:#fff;padding:4px;
+    box-shadow:0 6px 18px rgba(0,0,0,.2);position:relative;z-index:2}
+  .photo-wrap img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .photo-wrap.noimg{display:flex;align-items:center;justify-content:center;color:#9aa5b1;font-size:.72rem;border:2px dashed #d5dbe3}
 
-    {% if student.photo %}
-        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="verify-photo">
-    {% endif %}
+  .name-block{text-align:center;margin:10px 0 18px}
+  .name-block h2{margin:0;font-size:1.2rem;color:#1f2d3d}
+  .badges{margin-top:6px}
+  .badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:700;margin:0 3px}
+  .badge.status{background:#dcfce7;color:#15803d}
+  .badge.class{background:#fef3c7;color:#b45309}
 
-    <h1>{{ student.full_name }}</h1>
-    <span class="badge badge-success">{{ student.get_status_display }}</span>
+  .section{padding:0 20px 14px}
+  .section h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#8792a2;margin:0 0 8px;
+    border-bottom:1px solid #eef1f5;padding-bottom:6px}
+  .row{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:.9rem}
+  .row .label{color:#8792a2;flex-shrink:0}
+  .row .value{text-align:right;font-weight:600;color:#1f2d3d}
+  .parent-card{background:#f7f9fc;border:1px solid #e6ebf1;border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .parent-card .role{font-size:.68rem;text-transform:uppercase;color:#8792a2;font-weight:700}
+  .parent-card .pname{font-weight:700;margin:2px 0 4px}
+  .parent-card a{color:#1f3b5e;text-decoration:none;font-weight:600}
 
-    <dl>
-        <dt>Student Number</dt><dd>{{ student.student_number }}</dd>
-        <dt>Class</dt><dd>{{ student.get_grade_class_display }}</dd>
-        <dt>Parish</dt><dd>{{ student.parish|default:"—" }}</dd>
-        <dt>School</dt><dd>{{ site_settings.school_name }}</dd>
-    </dl>
+  .footer{margin-top:10px;padding:16px 20px;background:#f7f9fc;border-top:1px solid #eef1f5;text-align:center}
+  .footer p{margin:2px 0;font-size:.72rem;color:#8792a2}
+  .footer a{color:#1f3b5e;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  {% if site_settings.logo %}
+  <div class="watermark" style="background-image:url('{{ site_settings.logo.url }}')"></div>
+  {% endif %}
+  <div class="content">
 
-    <p class="verify-note">
-        This confirms the ID card belongs to a registered student of {{ site_settings.school_name }}.
-    </p>
+    <div class="header">
+      {% if site_settings.logo %}<img src="{{ site_settings.logo.url }}" class="logo" alt="Logo">{% endif %}
+      <h1>{{ site_settings.school_name }}</h1>
+      <p>Student Identity Verification</p>
+    </div>
+
+    <div class="photo-wrap {% if not student.photo %}noimg{% endif %}">
+      {% if student.photo %}
+        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}">
+      {% else %}
+        No Photo
+      {% endif %}
+    </div>
+
+    <div class="name-block">
+      <h2>{{ student.full_name }}</h2>
+      <div class="badges">
+        <span class="badge status">{{ student.get_status_display }}</span>
+        <span class="badge class">{{ student.get_grade_class_display }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Student Information</h3>
+      <div class="row"><span class="label">Student Number</span><span class="value">{{ student.student_number }}</span></div>
+      <div class="row"><span class="label">Date of Birth</span><span class="value">{{ student.date_of_birth|date:"d M Y" }}</span></div>
+      <div class="row"><span class="label">Parish</span><span class="value">{{ student.parish|default:"—" }}</span></div>
+    </div>
+
+    <div class="section">
+      <h3>Address</h3>
+      <div class="row"><span class="label">Full Address</span><span class="value">{{ student.full_address|default:"—" }}</span></div>
+      <div class="row"><span class="label">Region</span><span class="value">{{ student.region|default:"—" }}</span></div>
+      <div class="row"><span class="label">District / Ward</span><span class="value">{{ student.district|default:"—" }} / {{ student.ward|default:"—" }}</span></div>
+    </div>
+
+    <div class="section">
+      <h3>Parents / Guardian</h3>
+      {% if student.father_name %}
+      <div class="parent-card">
+        <div class="role">Father</div>
+        <div class="pname">{{ student.father_name }}</div>
+        {% if student.father_phone %}<a href="tel:{{ student.father_phone }}">{{ student.father_phone }}</a>{% endif %}
+      </div>
+      {% endif %}
+      {% if student.mother_name %}
+      <div class="parent-card">
+        <div class="role">Mother</div>
+        <div class="pname">{{ student.mother_name }}</div>
+        {% if student.mother_phone %}<a href="tel:{{ student.mother_phone }}">{{ student.mother_phone }}</a>{% endif %}
+      </div>
+      {% endif %}
+      {% if not student.father_name and not student.mother_name and student.guardian_name %}
+      <div class="parent-card">
+        <div class="role">Guardian{% if student.guardian_relationship %} · {{ student.guardian_relationship }}{% endif %}</div>
+        <div class="pname">{{ student.guardian_name }}</div>
+        {% if student.guardian_phone %}<a href="tel:{{ student.guardian_phone }}">{{ student.guardian_phone }}</a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="footer">
+      {% if site_settings.contact_phone %}<p>📞 {{ site_settings.contact_phone }}</p>{% endif %}
+      {% if site_settings.contact_email %}<p>✉️ {{ site_settings.contact_email }}</p>{% endif %}
+      {% if site_settings.website %}<p><a href="{{ site_settings.website }}">{{ site_settings.website }}</a></p>{% endif %}
+    </div>
+
+  </div>
 </div>
-{% endblock %}
+</body>
+</html>

@@ -3,13 +3,11 @@
 <style>
   .nf-wrap{max-width:900px}
   .nf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-  .nf-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
   .nf-card{border:1px solid #e3e8ee;border-radius:12px;padding:16px 18px;margin-bottom:12px;background:#fff}
   .nf-card.pending{border-left:4px solid #b45309}
   .nf-card.fixed{border-left:4px solid #15803d;opacity:.85}
   .nf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .nf-title{font-weight:700;color:#1f2d3d}
-  .nf-type{font-size:.72rem;color:#8792a2;text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
   .nf-badge{font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
   .nf-badge.pending{background:#fef3c7;color:#b45309}
   .nf-badge.fixed{background:#dcfce7;color:#15803d}
@@ -17,8 +15,6 @@
   .nf-meta{color:#8792a2;font-size:.8rem}
   .nf-btn{display:inline-block;border:0;border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#15803d;margin-top:8px}
   .nf-btn.clear{background:#b91c1c}
-  .nf-btn.check{background:#1f3b5e}
-  .nf-btn.all{background:#334155}
   .nf-empty{color:#8792a2;padding:20px 0;text-align:center}
   .nf-section-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
 </style>
@@ -28,33 +24,11 @@
     <h2>Notifications {% if pending_count %}<span class="nf-badge pending">{{ pending_count }} pending</span>{% endif %}</h2>
   </div>
 
-  <div class="nf-toolbar">
-    <form method="post" action="{% url 'notifications:run_checks' %}">
-      {% csrf_token %}
-      <button type="submit" class="nf-btn check">Run system check</button>
-    </form>
-    {% if pending_count %}
-    <form method="post" action="{% url 'notifications:mark_all_fixed' %}"
-          onsubmit="return confirm('Mark all {{ pending_count }} pending notification(s) as fixed?');">
-      {% csrf_token %}
-      <button type="submit" class="nf-btn all">Mark all as fixed</button>
-    </form>
-    {% endif %}
-    <form method="post" action="{% url 'notifications:clear_fixed' %}"
-          onsubmit="return confirm('Delete all fixed notification(s)? This cannot be undone.');">
-      {% csrf_token %}
-      <button type="submit" class="nf-btn clear">Clear notifications</button>
-    </form>
-  </div>
-
   <h3 style="margin-top:20px;color:#1f3b5e">Pending</h3>
   {% for n in pending %}
     <div class="nf-card pending">
       <div class="nf-top">
-        <div>
-          <span class="nf-title">{{ n.title }}</span>
-          <div class="nf-type">{{ n.get_notif_type_display }}</div>
-        </div>
+        <span class="nf-title">{{ n.title }}</span>
         <span class="nf-badge pending">Pending</span>
       </div>
       <div class="nf-msg">{{ n.message }}</div>
@@ -75,14 +49,18 @@
 
   <div class="nf-section-head">
     <h3 style="color:#1f3b5e;margin:0">Recently fixed</h3>
+    {% if fixed_count %}
+    <form method="post" action="{% url 'notifications:clear_fixed' %}"
+          onsubmit="return confirm('Delete all {{ fixed_count }} fixed notification(s)? This cannot be undone.');">
+      {% csrf_token %}
+      <button type="submit" class="nf-btn clear">Clear notifications</button>
+    </form>
+    {% endif %}
   </div>
   {% for n in fixed %}
     <div class="nf-card fixed">
       <div class="nf-top">
-        <div>
-          <span class="nf-title">{{ n.title }}</span>
-          <div class="nf-type">{{ n.get_notif_type_display }}</div>
-        </div>
+        <span class="nf-title">{{ n.title }}</span>
         <span class="nf-badge fixed">Fixed</span>
       </div>
       <div class="nf-msg">{{ n.message }}</div>

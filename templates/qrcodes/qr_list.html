@@ -1,8 +1,14 @@
-{# templates/qrcodes/qr_list.html -- change "base.html"/"content" to match your base template #}
 {% extends "base.html" %}
 {% block content %}
 <style>
   .qr-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+  .qr-actions-top{display:flex;gap:8px;flex-wrap:wrap}
+  .qr-actions-top a, .qr-actions-top summary{
+    display:inline-block;text-decoration:none;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;color:#fff;
+  }
+  .qr-actions-top .cards-btn{background:#15803d}
+  .qr-actions-top .print-btn{background:#1f3b5e}
+  .qr-actions-top .download-btn{background:#334155}
   .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
   .qr-class{grid-column:1/-1;margin:18px 0 0;padding-bottom:6px;border-bottom:2px solid #1f3b5e}
   .qr-item{border:1px solid #d5dbe3;border-radius:10px;padding:8px;text-align:center;background:#fff}
@@ -14,24 +20,31 @@
   .qr-item.expired .vu{color:#c0392b;font-weight:700}
   .qr-none{padding:40px 0;color:#999;font-size:12px}
   details.regen{position:relative}
-  details.regen summary{cursor:pointer;list-style:none;background:#c0392b;color:#fff;padding:8px 14px;border-radius:8px;display:inline-block}
+  details.regen summary{background:#c0392b}
   details.regen form{position:absolute;right:0;top:44px;z-index:5;background:#fff;border:1px solid #ccc;border-radius:10px;padding:14px;width:280px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
   details.regen input{width:100%;padding:8px;margin:8px 0}
   details.regen button{background:#c0392b;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;width:100%}
+  details.regen button[disabled]{opacity:.6;cursor:not-allowed}
 </style>
 
 <div class="qr-head">
   <h2>QR Codes <small>({{ total }})</small></h2>
-  <details class="regen">
-    <summary>Regenerate QR codes</summary>
-    <form method="post" action="{% url 'qrcodes:regenerate_all' %}"
-          onsubmit="return confirm('Rebuild ALL QR codes now?');">
-      {% csrf_token %}
-      <label>Enter your admin password to confirm:</label>
-      <input type="password" name="password" required autocomplete="current-password">
-      <button type="submit">Rebuild all QR codes</button>
-    </form>
-  </details>
+  <div class="qr-actions-top">
+    <a href="{% url 'qrcodes:id_cards_list' %}" class="cards-btn">View ID Cards</a>
+    <a href="{% url 'qrcodes:print_choose' %}?mode=qr" class="print-btn">Print QR codes</a>
+    <a href="{% url 'qrcodes:print_choose' %}?mode=qr" class="download-btn">Download QR codes</a>
+    <details class="regen">
+      <summary>Regenerate QR codes</summary>
+      <form method="post" action="{% url 'qrcodes:regenerate_all' %}"
+            onsubmit="return confirmRegen(this, 'QR codes');">
+        {% csrf_token %}
+        <input type="hidden" name="from" value="{% url 'qrcodes:list' %}">
+        <label>Enter your admin password to confirm:</label>
+        <input type="password" name="password" required autocomplete="current-password">
+        <button type="submit">Rebuild all QR codes</button>
+      </form>
+    </details>
+  </div>
 </div>
 
 {% if messages %}{% for m in messages %}<p><b>{{ m }}</b></p>{% endfor %}{% endif %}
@@ -61,4 +74,14 @@
   <p>No students yet.</p>
 {% endfor %}
 </div>
+
+<script>
+function confirmRegen(form, label) {
+    if (!confirm('Rebuild ALL ' + label + ' now?')) return false;
+    var btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '🚫 Regenerating…';
+    return true;   // let the normal form submit (page will redirect)
+}
+</script>
 {% endblock %}

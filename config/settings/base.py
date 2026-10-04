@@ -57,6 +57,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.accounts.context_processors.site_settings',
                 'apps.accounts.context_processors.role_context',
+                'apps.accounts.context_processors.theme_context',
             ],
         },
     },

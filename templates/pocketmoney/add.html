@@ -16,6 +16,8 @@
 
 <form method="post">
     {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
     <div class="form-grid">
         <div class="field">
             {{ form.transaction_type.label_tag }} {{ form.transaction_type }}

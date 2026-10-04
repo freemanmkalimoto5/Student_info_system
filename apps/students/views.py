@@ -244,9 +244,11 @@ def student_detail(request, pk):
         raise PermissionDenied("You don't have access to this student's record.")
 
     card = get_or_create_card(student)
+    from apps.pocketmoney.services import get_balance
     return render(request, 'students/student_detail.html', {
         'student': student,
         'card': card,
+        'pocket_balance': get_balance(student),
     })
 
 

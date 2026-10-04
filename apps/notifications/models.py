@@ -4,13 +4,9 @@ from django.utils import timezone
 
 
 class Notification(models.Model):
-    """
-    A system alert an admin needs to look at -- right now used for
-    possible duplicate student registrations, but written generally
-    enough to reuse for other warnings later.
-    """
     TYPE_CHOICES = [
         ('duplicate_student', 'Possible duplicate student'),
+        ('system_check', 'System check'),
     ]
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -22,7 +18,6 @@ class Notification(models.Model):
     message = models.TextField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
-    # The existing student this duplicate conflicts with, if known.
     existing_student = models.ForeignKey(
         'students.Student', null=True, blank=True,
         on_delete=models.SET_NULL, related_name='duplicate_notifications',
@@ -36,7 +31,7 @@ class Notification(models.Model):
     )
 
     class Meta:
-        ordering = ['status', '-created_at']   # pending first, newest first
+        ordering = ['status', '-created_at']
 
     def __str__(self):
         return f"[{self.get_status_display()}] {self.title}"

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Update Result{% endblock %}
+
+{% block content %}
+<h1>Replace Existing Details</h1>
+
+<div class="result-summary">
+    <span class="badge badge-success">{{ result.created|length }} added</span>
+    <span class="badge badge-success">{{ result.updated|length }} updated</span>
+    <span class="badge">{{ result.unchanged }} unchanged (skipped)</span>
+    {% if result.skipped %}<span class="badge badge-warning">{{ result.skipped|length }} problem row(s)</span>{% endif %}
+</div>
+
+{% if result.updated %}
+<fieldset>
+    <legend>Updated</legend>
+    <div class="table-responsive">
+        <table class="student-table">
+            <thead><tr><th>Number</th><th>Name</th><th>What changed</th></tr></thead>
+            <tbody>
+                {% for item in result.updated %}
+                <tr>
+                    <td data-label="Number">{{ item.number }}</td>
+                    <td data-label="Name"><a href="{% url 'students:detail' item.pk %}">{{ item.name }}</a></td>
+                    <td data-label="What changed">{{ item.changed|join:", " }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+{% endif %}
+
+{% if result.created %}
+<fieldset>
+    <legend>Newly Added</legend>
+    <ul class="import-created-list">
+        {% for item in result.created %}
+        <li><a href="{% url 'students:detail' item.pk %}">{{ item.name }}</a> ({{ item.number }})</li>
+        {% endfor %}
+    </ul>
+</fieldset>
+{% endif %}
+
+{% if result.skipped %}
+<fieldset>
+    <legend>Rows that could not be used</legend>
+    <div class="table-responsive">
+        <table class="student-table">
+            <thead><tr><th>Row</th><th>Reason</th></tr></thead>
+            <tbody>
+                {% for item in result.skipped %}
+                <tr><td data-label="Row">{{ item.row }}</td><td data-label="Reason">{{ item.reason }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+{% endif %}
+
+{% if not result.created and not result.updated and not result.skipped %}
+<p>Everything in the file already matches the system — nothing needed to change.</p>
+{% endif %}
+
+<p>
+    <a href="{% url 'students:import' %}" class="btn btn-secondary">Back to Import</a>
+    <a href="{% url 'students:list' %}" class="btn btn-secondary">Back to Student List</a>
+</p>
+{% endblock %}

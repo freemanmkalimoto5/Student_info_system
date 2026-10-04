@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .ic-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+  .ic-actions-top{display:flex;gap:8px;flex-wrap:wrap}
+  .ic-actions-top a, .ic-actions-top summary{
+    display:inline-block;text-decoration:none;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;color:#fff;
+  }
+  .ic-actions-top .qr-btn{background:#1f3b5e}
+  .ic-actions-top .print-btn{background:#334155}
+  .ic-actions-top .download-btn{background:#475569}
+  .ic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+  .ic-class{grid-column:1/-1;margin:18px 0 0;padding-bottom:6px;border-bottom:2px solid #1f3b5e}
+  details.regen{position:relative}
+  details.regen summary{background:#c0392b}
+  details.regen form{position:absolute;right:0;top:44px;z-index:5;background:#fff;border:1px solid #ccc;border-radius:10px;padding:14px;width:280px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+  details.regen input{width:100%;padding:8px;margin:8px 0}
+  details.regen button{background:#c0392b;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;width:100%}
+  details.regen button[disabled]{opacity:.6;cursor:not-allowed}
+
+  .id-card{background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%);border:1px solid #e3e8ee;border-radius:18px;
+    box-shadow:0 10px 30px -8px rgba(31,59,94,.18);overflow:hidden;position:relative}
+  .id-card::before{content:"";position:absolute;top:0;left:0;right:0;height:56px;
+    background:linear-gradient(120deg,#1f3b5e,#2f5788);z-index:0}
+  .id-card-watermark{position:absolute;inset:0;background-repeat:no-repeat;background-position:center 62%;
+    background-size:60%;opacity:.08;z-index:0;pointer-events:none}
+  .id-card-header{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 10px 4px}
+  .id-card-header img{width:36px;height:36px;border-radius:50%;background:#fff;padding:3px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .id-card-header h2{color:#fff;font-size:.78rem;font-weight:700;text-align:center;margin:3px 0 0;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+  .id-card-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:6px 12px 16px}
+  .id-card-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #fff;
+    box-shadow:0 3px 10px rgba(0,0,0,.18);margin-top:-22px;background:#fff;cursor:zoom-in}
+  .id-card-details{text-align:center;margin-top:6px}
+  .id-card-details p{margin:1px 0;font-size:.72rem;color:#344054}
+  .id-card-details p:first-child{font-size:.85rem;font-weight:700;color:#1f2d3d;margin-bottom:2px}
+  .id-card-qr{margin-top:8px;padding:6px;background:#fff;border:1px solid #eef1f5;border-radius:8px}
+  .id-card-qr img{width:78px;height:78px;display:block}
+  .ic-none{padding:24px 0;color:#999;font-size:11px;text-align:center}
+</style>
+
+<div class="ic-head">
+  <h2>ID Cards <small>({{ total }})</small></h2>
+  <div class="ic-actions-top">
+    <a href="{% url 'qrcodes:list' %}" class="qr-btn">View QR Codes</a>
+    <a href="{% url 'qrcodes:print_choose' %}?mode=cards" class="print-btn">Print ID Cards</a>
+    <a href="{% url 'qrcodes:print_choose' %}?mode=cards" class="download-btn">Download ID Cards</a>
+    <details class="regen">
+      <summary>Regenerate ID Cards</summary>
+      <form method="post" action="{% url 'qrcodes:regenerate_all' %}"
+            onsubmit="return confirmRegen(this, 'ID cards');">
+        {% csrf_token %}
+        <input type="hidden" name="from" value="{% url 'qrcodes:id_cards_list' %}">
+        <label>Enter your admin password to confirm:</label>
+        <input type="password" name="password" required autocomplete="current-password">
+        <button type="submit">Rebuild all ID cards</button>
+      </form>
+    </details>
+  </div>
+</div>
+
+{% if messages %}{% for m in messages %}<p><b>{{ m }}</b></p>{% endfor %}{% endif %}
+
+<div class="ic-grid">
+{% for s in students %}
+  {% ifchanged s.grade_class s.status|slice:":1" %}
+    <h3 class="ic-class">{% if s.status == 'graduated' %}Graduated – {% endif %}{{ s.get_grade_class_display }}</h3>
+  {% endifchanged %}
+  <div class="id-card">
+    {% if site_settings.logo %}
+    <div class="id-card-watermark" style="background-image:url('{{ site_settings.logo.url }}')"></div>
+    {% endif %}
+    <div class="id-card-header">
+      {% if site_settings.logo %}<img src="{{ site_settings.logo.url }}" alt="Logo">{% endif %}
+      <h2>{{ site_settings.school_name }}</h2>
+    </div>
+    <div class="id-card-body">
+      {% if s.photo %}
+        <img src="{{ s.photo.url }}" alt="{{ s.full_name }}" class="id-card-photo" onclick="openLightbox(this.src)">
+      {% endif %}
+      <div class="id-card-details">
+        <p>{{ s.full_name }}</p>
+        <p>No: {{ s.student_number }}</p>
+        <p>Class: {{ s.get_grade_class_display }}</p>
+      </div>
+      {% if s.card and s.card.is_expired %}
+        <div class="ic-none">EXPIRED</div>
+      {% elif s.card and s.card.qr_image %}
+        <div class="id-card-qr"><img src="{{ s.card.qr_image.url }}"></div>
+      {% else %}
+        <div class="ic-none">No QR yet</div>
+      {% endif %}
+    </div>
+  </div>
+{% empty %}
+  <p>No students yet.</p>
+{% endfor %}
+</div>
+
+<div id="lightboxOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out"
+     onclick="closeLightbox()">
+  <img id="lightboxImg" src="" style="max-width:92vw;max-height:92vh;border-radius:10px">
+</div>
+<script>
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxOverlay').style.display = 'flex';
+}
+function closeLightbox(){
+  document.getElementById('lightboxOverlay').style.display = 'none';
+}
+function confirmRegen(form, label) {
+    if (!confirm('Rebuild ALL ' + label + ' now?')) return false;
+    var btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '🚫 Regenerating…';
+    return true;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,204 @@
+/* ============================================================
+   DARK THEME — loaded on top of base.css (see base.html).
+   Targets the class names already used across this project's
+   templates: sidebar, topbar, cards, fieldsets, buttons, badges,
+   tables, forms, messages, plus the QR/lost-items/notifications
+   panels built earlier. Uses !important where needed since the
+   original base.css sets its own colors directly (not via
+   variables), so this file has to win on top of it.
+   ============================================================ */
+
+:root {
+    --dk-bg: #0f172a;
+    --dk-bg-elevated: #1e293b;
+    --dk-bg-soft: #16213a;
+    --dk-border: #334155;
+    --dk-text: #f1f5f9;
+    --dk-text-muted: #94a3b8;
+    --dk-primary: #3b82f6;
+    --dk-link: #60a5fa;
+}
+
+body {
+    background: var(--dk-bg) !important;
+    color: var(--dk-text) !important;
+}
+
+/* ---- shell / layout ---- */
+.app-shell, .app-content, main.container {
+    background: var(--dk-bg) !important;
+}
+
+.app-sidebar, .sidebar, aside {
+    background: #090d16 !important;
+    border-color: var(--dk-border) !important;
+}
+.sidebar-link, .sidebar-brand-text, .sidebar-user-name {
+    color: var(--dk-text-muted) !important;
+}
+.sidebar-link.active, .sidebar-link:hover {
+    background: var(--dk-bg-elevated) !important;
+    color: #ffffff !important;
+}
+.sidebar-logout-btn { color: #f87171 !important; }
+
+.app-topbar, .navbar, header {
+    background: var(--dk-bg-elevated) !important;
+    border-color: var(--dk-border) !important;
+    color: var(--dk-text) !important;
+}
+.topbar-school-name { color: var(--dk-text) !important; }
+
+.footer { background: var(--dk-bg-elevated) !important; color: var(--dk-text-muted) !important; }
+
+.back-link { color: var(--dk-link) !important; }
+
+/* ---- headings / text ---- */
+h1, h2, h3, h4, h5, h6 { color: var(--dk-text) !important; }
+p, span, small, label, dt, dd, li { color: var(--dk-text-muted); }
+a { color: var(--dk-link); }
+
+/* ---- fieldsets / cards (used throughout students, lostitems, notifications) ---- */
+fieldset, .card, .nf-card, .li-item, .qr-item, .lp-card {
+    background: var(--dk-bg-elevated) !important;
+    border-color: var(--dk-border) !important;
+    color: var(--dk-text) !important;
+}
+legend { color: var(--dk-primary) !important; background: transparent !important; }
+
+/* ---- tables (also forces every row's own background dark, not just on hover) ---- */
+table, .lp-table, .logs-table { color: var(--dk-text) !important; }
+table, thead, tbody, tr, th, td, .lp-table tr, .lp-table td, .logs-table tr, .logs-table td {
+    background: var(--dk-bg-elevated) !important;
+    border-color: var(--dk-border) !important;
+}
+thead th, .lp-table th, .logs-table th {
+    background: var(--dk-bg-soft) !important;
+    color: var(--dk-text-muted) !important;
+}
+tbody tr:hover, .lp-table tr:hover, .logs-table tr:hover {
+    background: #24314a !important;
+}
+
+/* ---- forms ---- */
+input, select, textarea {
+    background: var(--dk-bg-soft) !important;
+    color: var(--dk-text) !important;
+    border-color: var(--dk-border) !important;
+}
+input::placeholder, textarea::placeholder { color: #64748b !important; }
+input:focus, select:focus, textarea:focus {
+    border-color: var(--dk-primary) !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.25) !important;
+}
+/* file-upload boxes / photo placeholders that use a light box background */
+input[type="file"] { background: var(--dk-bg-soft) !important; }
+
+/* ---- buttons ---- */
+.btn, button, .li-btn, .nf-btn {
+    color: #fff !important;
+}
+.btn-secondary, .li-btn.ghost { background: #334155 !important; color: var(--dk-text) !important; }
+.btn-danger, .li-btn.del, .nf-btn.clear { background: #b91c1c !important; }
+
+/* ---- badges / status ---- */
+.badge-success, .li-badge.paid, .nf-badge.fixed { background: #14532d !important; color: #86efac !important; }
+.badge-warning, .li-badge.pending, .nf-badge.pending { background: #78350f !important; color: #fcd34d !important; }
+.li-badge.partial { background: #1e3a8a !important; color: #93c5fd !important; }
+
+/* ---- flash messages ---- */
+.messages .message { border-color: var(--dk-border) !important; }
+.message.success { background: #14532d !important; color: #bbf7d0 !important; }
+.message.error, .message.danger { background: #7f1d1d !important; color: #fecaca !important; }
+.message.warning { background: #78350f !important; color: #fde68a !important; }
+.message.info { background: #1e3a8a !important; color: #bfdbfe !important; }
+
+/* ---- notifications page ---- */
+.nf-msg, .nf-meta { color: var(--dk-text-muted) !important; }
+
+/* ---- progress bars ---- */
+.li-progress { background: #334155 !important; }
+.li-list { background: transparent !important; }
+
+/* ---- lost-items report money summary boxes (.lp-money / .lp-grid2 / .li-sum / .li-stat) ---- */
+.lp-money div, .lp-grid2 div, .li-sum div, .li-stat, .sd-item, .sd-person {
+    background: var(--dk-bg-soft) !important;
+    color: var(--dk-text) !important;
+}
+.lp-money small, .li-sum small, .li-stat small, .sd-item small, .sd-role {
+    color: var(--dk-text-muted) !important;
+}
+
+/* ---- generic catch-all: any element still using a literal light
+   inline background (style="background:#fff" etc.) from an older
+   or not-yet-updated template ---- */
+[style*="background:#fff"], [style*="background: #fff"],
+[style*="background:#ffffff"], [style*="background: #ffffff"],
+[style*="background:#f4f6f9"], [style*="background: #f4f6f9"],
+[style*="background:#f8fafc"], [style*="background: #f8fafc"],
+[style*="background:#f7f9fc"], [style*="background: #f7f9fc"],
+[style*="background:#eef1f5"], [style*="background: #eef1f5"],
+[style*="background-color:#fff"], [style*="background-color: #fff"] {
+    background: var(--dk-bg-soft) !important;
+    color: var(--dk-text) !important;
+}
+
+/* ============================================================
+   THE PRINTED STUDENT ID CARD stays LIGHT in every theme, on
+   purpose -- it represents a physical card and must always look
+   the same (and stay legible) whether the surrounding app is in
+   light or dark mode. This section OVERRIDES the generic dark
+   rules above for just this one component.
+   ============================================================ */
+.id-card, .id-card-body, .id-card-details, .id-card-qr {
+    background: #ffffff !important;
+    color: #1f2d3d !important;
+}
+.id-card-details p { color: #344054 !important; }
+.id-card-details p:first-child { color: #1f2d3d !important; }
+.id-card-header h2 { color: #ffffff !important; }   /* stays on the navy header, unaffected */
+
+/* ============================================================
+   Text colors hardcoded (dark navy/grey) inside this project's
+   own <style> blocks -- these need explicit overrides since they
+   are MORE specific than the generic p/span/label rule above.
+   ============================================================ */
+
+/* student_detail.html -- Student Information / Parents / Address values */
+.sd-item .v, .sd-item .v.big, .sd-pname {
+    color: var(--dk-text) !important;
+}
+.sd-line { color: var(--dk-text-muted) !important; }
+.sd-line a { color: var(--dk-link) !important; }
+
+/* lost items panel -- item name */
+.li-name { color: var(--dk-text) !important; }
+
+/* notifications list -- notification title */
+.nf-title { color: var(--dk-text) !important; }
+
+/* lost items report / pay / form pages (lp-* classes) */
+.lp-card h2 { color: var(--dk-text) !important; }
+.lp-field label { color: var(--dk-text) !important; }
+.lp-sub { color: var(--dk-text-muted) !important; }
+
+/* ============================================================
+   Settings page: "School Branding" logo preview boxes
+   (.logo-preview-box / .logo-preview-label / .logo-preview-placeholder
+   come from base.css, not from settings.html itself)
+   ============================================================ */
+.logo-preview-box {
+    background: var(--dk-bg-soft) !important;
+    border-color: var(--dk-border) !important;
+}
+.logo-preview-label, .logo-preview-placeholder {
+    color: var(--dk-text-muted) !important;
+}
+.logo-preview-arrow { color: var(--dk-text) !important; }
+
+
+
+.detail-canvas {
+    background: var(--dk-bg-elevated) !important;
+    border-color: var(--dk-border) !important;
+}

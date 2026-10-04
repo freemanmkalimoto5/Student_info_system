@@ -12,4 +12,5 @@ urlpatterns = [
     path('audit-log/', views.audit_log, name='audit_log'),
     path('audit-log/<int:pk>/delete/', views.audit_log_delete, name='audit_log_delete'),
     path('audit-log/clear/', views.audit_log_clear_all, name='audit_log_clear_all'),
+    path('set-theme/', views.set_theme, name='set_theme'),
 ]

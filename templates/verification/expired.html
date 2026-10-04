@@ -2,5 +2,18 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Card not valid</title>
-<style>body{font-family:system-ui,Arial;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f4f6f9;color:#555;margin:0}</style>
-</head><body><p>This ID card is no longer valid.</p></body></html>
+<style>
+  body{font-family:system-ui,Arial;display:flex;min-height:100vh;align-items:center;justify-content:center;
+    background:#f4f6f9;color:#555;margin:0;text-align:center;padding:20px}
+  .box{background:#fff;border-radius:14px;padding:30px 26px;box-shadow:0 10px 30px rgba(0,0,0,.08);max-width:320px}
+  .box img{width:48px;height:48px;border-radius:50%;margin-bottom:12px}
+  .box h2{margin:0 0 6px;font-size:1.05rem;color:#b91c1c}
+  .box p{margin:0;font-size:.88rem;color:#667085}
+</style>
+</head><body>
+  <div class="box">
+    {% if site_settings.logo %}<img src="{{ site_settings.logo.url }}" alt="Logo">{% endif %}
+    <h2>This ID card is no longer valid</h2>
+    <p>Please contact {{ site_settings.school_name }} for assistance.</p>
+  </div>
+</body></html>
