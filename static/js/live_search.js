@@ -8,26 +8,58 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    var debounceTimer = null;
     var DEBOUNCE_MS = 350;
+    var SKELETON_DELAY_MS = 120;     // quick answers never flash a skeleton
+    var debounceTimer = null;
+    var skeletonTimer = null;
+    var requestId = 0;               // so a slow, older answer can't overwrite a newer one
+    var skeletonShown = false;
+    var lastHtml = '';
+
+    function startLoading() {
+        clearTimeout(skeletonTimer);
+        skeletonShown = false;
+        lastHtml = container.innerHTML;
+        skeletonTimer = setTimeout(function () {
+            if (window.Skeleton) {
+                skeletonShown = true;
+                container.innerHTML = window.Skeleton.tableHtml(7);
+            }
+        }, SKELETON_DELAY_MS);
+    }
+
+    function finishLoading() {
+        clearTimeout(skeletonTimer);
+        skeletonShown = false;
+    }
+
+    function load(fetchUrl, historyUrl) {
+        var mine = ++requestId;
+        startLoading();
+
+        fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) { return response.text(); })
+            .then(function (html) {
+                if (mine !== requestId) { return; }      // a newer search already started
+                finishLoading();
+                container.innerHTML = html;
+                if (window.Skeleton) { window.Skeleton.watchImages(container); }
+                window.history.replaceState({}, '', historyUrl);
+            })
+            .catch(function () {
+                if (mine !== requestId) { return; }
+                // Network hiccup: put the previous table back rather than leaving
+                // the grey skeleton, so the user doesn't lose their view.
+                if (skeletonShown) { container.innerHTML = lastHtml; }
+                finishLoading();
+            });
+    }
 
     function runSearch() {
         var url = new URL(window.location.href);
         url.searchParams.set('q', input.value);
         url.searchParams.delete('page'); // a new search always starts at page 1
-
-        fetch(url.toString(), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(function (response) { return response.text(); })
-            .then(function (html) {
-                container.innerHTML = html;
-                window.history.replaceState({}, '', url.toString());
-            })
-            .catch(function () {
-                // Network hiccup: leave the existing table as-is rather
-                // than clearing it, so the user doesn't lose their view.
-            });
+        load(url.toString(), url.toString());
     }
 
     input.addEventListener('input', function () {
@@ -43,11 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         event.preventDefault();
-        fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(function (response) { return response.text(); })
-            .then(function (html) {
-                container.innerHTML = html;
-                window.history.replaceState({}, '', link.href);
-            });
+        load(link.href, link.href);
     });
 });

@@ -1,24 +1,177 @@
 {% extends 'base.html' %}
 {% block title %}Complete Your Profile{% endblock %}
+{% block back_button %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Nothing else in the system is reachable until this form is done, so hide the menu. */
+  .app-sidebar{display:none !important}
+  .app-shell .app-content{margin-left:0 !important}
+  .cp-box{max-width:620px;margin:0 auto}
+  .cp-req{color:#b91c1c;font-weight:700}
+  .cp-logout{margin-top:18px;text-align:center}
+  .cp-logout button{background:none;border:0;color:#667085;text-decoration:underline;cursor:pointer;font-size:.9rem}
+  .cp-names{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:640px){.cp-names{grid-template-columns:1fr}}
+</style>
+{% endblock %}
 
 {% block content %}
-<h1>Welcome — Complete Your Profile</h1>
-<p>Before you continue, please tell the system who you are. This is recorded whenever you add, edit, or delete a student.</p>
+<div class="cp-box">
+    <h1>Welcome — Complete Your Profile</h1>
+    <p>Your account was created by the system administrator. Before you can open the dashboard, please add your photo and fill in <strong>all</strong> the details below. This is recorded whenever you add, edit, or delete a student.</p>
 
-<form method="post">
-    {% csrf_token %}
-    <div class="form-grid">
-        <div class="field">
-            {{ form.full_name.label_tag }} {{ form.full_name }}
-            {% if form.full_name.errors %}<p class="field-error">{{ form.full_name.errors|striptags }}</p>{% endif %}
-        </div>
-        <div class="field">
-            {{ form.phone.label_tag }} {{ form.phone }}
-        </div>
-        <div class="field">
-            {{ form.position.label_tag }} {{ form.position }}
-        </div>
-    </div>
-    <button type="submit">Save and Continue</button>
-</form>
+    {% if form.non_field_errors %}
+        <p class="login-error">{{ form.non_field_errors|striptags }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="student-form">
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>Your Photo</legend>
+            <div class="photo-upload-card">
+                <img id="photo-preview-img" src="" alt="Photo preview" class="photo-upload-preview" style="display:none;">
+                <div id="photo-preview-placeholder" class="photo-upload-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+                </div>
+                <div class="photo-upload-controls">
+                    <label>{{ form.photo.label }} <span class="cp-req">*</span></label>
+
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                        {{ form.photo }}
+                        <button type="button" id="openCameraBtn" class="btn btn-secondary" style="white-space:nowrap;font-size:.85rem;padding:7px 14px">📷 Take a Photo</button>
+                    </div>
+
+                    <div id="cameraBox" style="display:none;margin-top:10px;max-width:320px">
+                        <video id="cameraVideo" autoplay playsinline style="width:100%;border-radius:10px;background:#000"></video>
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button type="button" id="captureBtn" class="btn" style="font-size:.85rem;padding:7px 14px">Capture</button>
+                            <button type="button" id="closeCameraBtn" class="btn btn-secondary" style="font-size:.85rem;padding:7px 14px">Cancel</button>
+                        </div>
+                        <canvas id="cameraCanvas" style="display:none"></canvas>
+                    </div>
+                    <div id="cameraError" style="display:none;color:#b91c1c;font-size:.85rem;margin-top:6px"></div>
+
+                    {% if form.photo.errors %}<p class="field-error">{{ form.photo.errors|striptags }}</p>{% endif %}
+                    <p class="field-hint">A clear, front-facing photo of yourself — this is your identity in the system. JPG or PNG, under 5 MB.</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Your Details</legend>
+            <div class="cp-names">
+                <div class="field">
+                    {{ form.first_name.label_tag }} <span class="cp-req">*</span> {{ form.first_name }}
+                    {% if form.first_name.errors %}<p class="field-error">{{ form.first_name.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="field">
+                    {{ form.middle_name.label_tag }} <span class="cp-req">*</span> {{ form.middle_name }}
+                    {% if form.middle_name.errors %}<p class="field-error">{{ form.middle_name.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="field">
+                    {{ form.last_name.label_tag }} <span class="cp-req">*</span> {{ form.last_name }}
+                    {% if form.last_name.errors %}<p class="field-error">{{ form.last_name.errors|striptags }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="field field-full">
+                    {{ form.email.label_tag }} <span class="cp-req">*</span> {{ form.email }}
+                    {% if form.email.errors %}<p class="field-error">{{ form.email.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="field">
+                    {{ form.phone.label_tag }} <span class="cp-req">*</span> {{ form.phone }}
+                    {% if form.phone.errors %}<p class="field-error">{{ form.phone.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="field">
+                    {{ form.position.label_tag }} <span class="cp-req">*</span> {{ form.position }}
+                    {% if form.position.errors %}<p class="field-error">{{ form.position.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="field field-full">
+                    {{ form.selected_role.label_tag }} <span class="cp-req">*</span> {{ form.selected_role }}
+                    {% if form.selected_role.errors %}<p class="field-error">{{ form.selected_role.errors|striptags }}</p>{% endif %}
+                    <p class="field-hint">Select the role the superuser gave you when your account was created. It must match, or you will not be able to continue.</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <p class="field-hint"><span class="cp-req">*</span> All fields, including the photo, are required.</p>
+        <button type="submit">Save and Continue</button>
+    </form>
+
+    <form method="post" action="{% url 'accounts:logout' %}" class="cp-logout">
+        {% csrf_token %}
+        <button type="submit">Not you? Log out</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var photoInput = document.getElementById('id_photo');
+    var previewImg = document.getElementById('photo-preview-img');
+    var placeholder = document.getElementById('photo-preview-placeholder');
+    if (!photoInput) return;
+
+    // Show the chosen (or captured) photo immediately.
+    photoInput.addEventListener('change', function () {
+        var file = photoInput.files && photoInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ---- Take a photo with the device camera (needs HTTPS or localhost) ----
+    var openBtn = document.getElementById('openCameraBtn');
+    var closeBtn = document.getElementById('closeCameraBtn');
+    var captureBtn = document.getElementById('captureBtn');
+    var cameraBox = document.getElementById('cameraBox');
+    var video = document.getElementById('cameraVideo');
+    var canvas = document.getElementById('cameraCanvas');
+    var errorBox = document.getElementById('cameraError');
+    var stream = null;
+
+    function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+
+    function stopCamera() {
+        if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+        cameraBox.style.display = 'none';
+    }
+
+    openBtn.addEventListener('click', function () {
+        errorBox.style.display = 'none';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError('Camera access needs HTTPS or "localhost". Use "Choose File" instead.');
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+            .then(function (s) { stream = s; video.srcObject = stream; cameraBox.style.display = 'block'; })
+            .catch(function (err) { showError('Could not open the camera: ' + err.message + '. Use "Choose File" instead.'); });
+    });
+
+    closeBtn.addEventListener('click', stopCamera);
+
+    captureBtn.addEventListener('click', function () {
+        canvas.width = video.videoWidth || 480;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function (blob) {
+            var file = new File([blob], 'admin_photo_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+            var dt = new DataTransfer();
+            dt.items.add(file);
+            photoInput.files = dt.files;                       // puts the capture into the photo field
+            photoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            stopCamera();
+        }, 'image/jpeg', 0.9);
+    });
+});
+</script>
 {% endblock %}

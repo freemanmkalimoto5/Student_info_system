@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Administrators{% endblock %}
+
+{% block content %}
+<style>
+  .ad-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .ad-stat{background:#f4f6f9;border-radius:12px;padding:12px 14px}
+  .ad-stat b{display:block;font-size:1.4rem;color:#1f3b5e}
+  .ad-stat span{color:#667085;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+  .ad-stat.warn{background:#fff7ed}.ad-stat.warn b{color:#b45309}
+  .ad-search{width:100%;max-width:420px;padding:10px 12px;border:1px solid #cbd3dc;border-radius:9px;font-size:1rem;margin-bottom:14px;box-sizing:border-box}
+  .ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+  .ad-card{background:#fff;border:1px solid #e3e8ee;border-radius:14px;padding:16px 18px;color:#1f2d3d}
+  .ad-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+  .ad-name{font-weight:700;font-size:1.05rem;line-height:1.2;color:#1f2d3d}
+  .ad-user{color:#8792a2;font-size:.82rem}
+  .ad-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .ad-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.7rem;font-weight:700;white-space:nowrap}
+  .ad-badge.role-superuser{background:#ede9fe;color:#6d28d9}
+  .ad-badge.role-admin{background:#dbeafe;color:#1d4ed8}
+  .ad-badge.role-clerk{background:#fef3c7;color:#b45309}
+  .ad-badge.state-ok{background:#dcfce7;color:#15803d}
+  .ad-badge.state-pending{background:#ffedd5;color:#c2410c}
+  .ad-badge.state-super{background:#ede9fe;color:#6d28d9}
+  .ad-badge.off{background:#fee2e2;color:#b91c1c}
+  .ad-rows{margin:0;padding:0}
+  .ad-rows div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid #eef1f5;font-size:.88rem}
+  .ad-rows dt{color:#8792a2;flex-shrink:0;margin:0}
+  .ad-rows dd{margin:0;text-align:right;font-weight:600;color:#1f2d3d;word-break:break-word}
+  .ad-empty{color:#8792a2;padding:24px 0;text-align:center}
+  @media(max-width:700px){.ad-stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* dark: follows the account's theme (system = the device's own setting) */
+  body[data-theme="dark"] .ad-card{background:#1e293b;border-color:#334155;color:#f1f5f9}
+  body[data-theme="dark"] .ad-name,body[data-theme="dark"] .ad-rows dd{color:#f1f5f9}
+  body[data-theme="dark"] .ad-rows div{border-color:#334155}
+  body[data-theme="dark"] .ad-stat{background:#16213a}
+  body[data-theme="dark"] .ad-stat b{color:#f1f5f9}
+  body[data-theme="dark"] .ad-search{background:#16213a;border-color:#334155;color:#f1f5f9}
+  @media (prefers-color-scheme: dark){
+    body[data-theme="system"] .ad-card{background:#1e293b;border-color:#334155;color:#f1f5f9}
+    body[data-theme="system"] .ad-name,body[data-theme="system"] .ad-rows dd{color:#f1f5f9}
+    body[data-theme="system"] .ad-rows div{border-color:#334155}
+    body[data-theme="system"] .ad-stat{background:#16213a}
+    body[data-theme="system"] .ad-stat b{color:#f1f5f9}
+    body[data-theme="system"] .ad-search{background:#16213a;border-color:#334155;color:#f1f5f9}
+  }
+</style>
+
+<div class="ad-head">
+    <h1>Administrators</h1>
+    <a href="{% url 'accounts:add_admin' %}" class="btn">Add New Admin</a>
+</div>
+<p class="field-hint">Every login with staff access and the details they gave. This page is visible to the superuser only.</p>
+
+<div class="ad-stats">
+    <div class="ad-stat"><b>{{ counts.superuser }}</b><span>Superusers</span></div>
+    <div class="ad-stat"><b>{{ counts.admin }}</b><span>Admins</span></div>
+    <div class="ad-stat"><b>{{ counts.clerk }}</b><span>Clerks</span></div>
+    <div class="ad-stat warn"><b>{{ counts.pending }}</b><span>Profile pending</span></div>
+</div>
+
+<input type="text" id="ad-search" class="ad-search" placeholder="Search by name, username, phone, position…" autocomplete="off">
+
+<div class="ad-grid" id="ad-grid">
+    {% for a in admins %}
+    <div class="ad-card" data-search="{{ a.search }}">
+        <div class="ad-top">
+            <div>
+                <div class="ad-name">{{ a.display_name }}</div>
+                <div class="ad-user">@{{ a.user.username }}</div>
+            </div>
+            <div class="ad-badges">
+                <span class="ad-badge role-{{ a.role_key }}">{{ a.role_label }}</span>
+                <span class="ad-badge state-{{ a.state }}">{{ a.state_label }}</span>
+                {% if not a.user.is_active %}<span class="ad-badge off">Disabled</span>{% endif %}
+            </div>
+        </div>
+
+        <dl class="ad-rows">
+            <div><dt>Full name</dt><dd>{{ a.full_name|default:"—" }}</dd></div>
+            <div><dt>Position</dt><dd>{{ a.position|default:"—" }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ a.phone|default:"—" }}</dd></div>
+            <div><dt>Email</dt><dd>{{ a.email|default:"—" }}</dd></div>
+            <div><dt>Account created</dt><dd>{{ a.user.date_joined|date:"d M Y" }}</dd></div>
+            <div><dt>Last login</dt><dd>{% if a.user.last_login %}{{ a.user.last_login|date:"d M Y, H:i" }}{% else %}Never{% endif %}</dd></div>
+            <div><dt>Students registered</dt><dd>{{ a.students_added }}</dd></div>
+            <div><dt>Actions recorded</dt><dd>{{ a.user.action_count }}{% if a.user.last_action %} · last {{ a.user.last_action|date:"d M Y" }}{% endif %}</dd></div>
+            {% if a.profile %}
+            <div><dt>Theme / Language</dt><dd>{{ a.profile.get_theme_display }} / {{ a.profile.get_language_display }}</dd></div>
+            {% endif %}
+        </dl>
+    </div>
+    {% empty %}
+    <p class="ad-empty">No administrators yet.</p>
+    {% endfor %}
+</div>
+<p class="ad-empty" id="ad-none" style="display:none">No administrator matches your search.</p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('ad-search');
+    var cards = document.querySelectorAll('#ad-grid .ad-card');
+    var none = document.getElementById('ad-none');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        var shown = 0;
+        cards.forEach(function (card) {
+            var match = !q || card.dataset.search.indexOf(q) !== -1;
+            card.style.display = match ? '' : 'none';
+            if (match) shown++;
+        });
+        none.style.display = (shown === 0 && cards.length) ? 'block' : 'none';
+    });
+});
+</script>
+{% endblock %}

@@ -11,6 +11,7 @@
         <link rel="stylesheet" href="{% static 'css/theme-dark.css' %}"
               media="{% if effective_theme == 'dark' %}all{% else %}(prefers-color-scheme: dark){% endif %}">
     {% endif %}
+    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body data-theme="{{ effective_theme }}">
@@ -45,6 +46,8 @@
         </div>
     </div>
 
+    {# skeleton.js must come before live_search.js (both deferred, so they run in this order) #}
+    <script src="{% static 'js/skeleton.js' %}" defer></script>
     <script src="{% static 'js/live_search.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>

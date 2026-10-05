@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
-{% block title %}Add New Admin{% endblock %}
+{% block title %}Add New Account{% endblock %}
 
 {% block content %}
-<h1>Add New Admin or Clerk</h1>
-<p>Create a login for a new team member. They'll fill in their own name, phone, and position the first time they log in.</p>
+<h1>Add New Superuser, Admin or Clerk</h1>
+<p>Create a login for a new team member. They'll fill in their own name, email, phone, and position the first time they log in, and nothing else opens until they do.</p>
 <p class="field-hint">
-    <strong>Admin</strong>: full access, same as you.
-    <strong>Clerk</strong>: access to everything except the Audit Log, and a cut-down Settings page (their own contact info, theme, and language only).
+    <strong>Superuser</strong>: full control, same as you — including adding other accounts, the Administrators page, and the Django admin panel.
+    <strong>Admin</strong>: full day-to-day access (students, QR codes, pocket money, audit log, school settings).
+    <strong>Clerk</strong>: everything except the Audit Log, and a cut-down Settings page (their own contact info, theme, and language only).
 </p>
 
-<form method="post">
+<form method="post" id="add-account-form">
     {% csrf_token %}
     <div class="form-grid">
         <div class="field">
@@ -22,10 +23,28 @@
         </div>
         <div class="field">
             {{ form.role.label_tag }} {{ form.role }}
+            {% if form.role.errors %}<p class="field-error">{{ form.role.errors|striptags }}</p>{% endif %}
         </div>
     </div>
     <button type="submit">Create Account</button>
 </form>
 
-<p><a href="{% url 'accounts:settings' %}" class="btn btn-secondary">Back to Settings</a></p>
+<p><a href="{% url 'accounts:administrators' %}" class="btn btn-secondary">Back to Administrators</a></p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('add-account-form');
+    var role = document.getElementById('id_role');
+    if (!form || !role) return;
+    // A superuser can do everything you can, so ask once before creating one.
+    form.addEventListener('submit', function (event) {
+        if (role.value === 'superuser' &&
+            !confirm('This account will have FULL control of the system, including adding or removing other administrators. Create it as a Superuser?')) {
+            event.preventDefault();
+        }
+    });
+});
+</script>
 {% endblock %}

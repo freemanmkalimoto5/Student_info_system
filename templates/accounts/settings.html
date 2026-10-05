@@ -28,8 +28,6 @@
   .theme-option input{margin:0}
   body[data-theme="dark"] .theme-option, body[data-theme="system"] .theme-option{border-color:#334155;color:#f1f5f9}
   body[data-theme="dark"] .theme-option.selected, body[data-theme="system"] .theme-option.selected{border-color:#3b82f6;background:rgba(59,130,246,.18)}
-  .superuser-only-msg{display:none;margin-top:14px;padding:12px 16px;border-radius:10px;font-weight:800;letter-spacing:.05em;
-    background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
 </style>
 
 <fieldset>
@@ -65,11 +63,13 @@
     </form>
 </fieldset>
 
+{% if user.is_superuser %}
 <fieldset>
     <legend>Administrator Accounts</legend>
-    <p>Add a new admin login, or review who's made changes to student records.</p>
+    <p>Add a new admin login, see everyone who has staff access, or review who's made changes to student records.</p>
     <div class="settings-links">
         <a href="{% url 'accounts:add_admin' %}" class="btn">Add New Admin</a>
+        <a href="{% url 'accounts:administrators' %}" class="btn btn-secondary">View Administrators</a>
         <a href="{% url 'accounts:audit_log' %}" class="btn btn-secondary">View Audit Log</a>
     </div>
 </fieldset>
@@ -78,16 +78,13 @@
     <legend>System Access</legend>
     <p>These open the full Django admin panel for deeper management.</p>
     <div class="settings-links">
-        {# Superuser: real links. Anyone else: the same buttons, but a click only shows "SUPERUSER ONLY" (no 403 page). #}
-        <a {% if user.is_superuser %}href="/admin/"{% else %}href="#" data-superuser-only{% endif %} class="btn">Django Admin Panel</a>
-        <a {% if user.is_superuser %}href="/admin/auth/user/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage Staff Accounts</a>
-        <a {% if user.is_superuser %}href="/admin/students/student/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage Students</a>
-        <a {% if user.is_superuser %}href="/admin/qrcodes/idcard/"{% else %}href="#" data-superuser-only{% endif %} class="btn btn-secondary">Manage ID Cards</a>
+        <a href="/admin/" class="btn">Django Admin Panel</a>
+        <a href="/admin/auth/user/" class="btn btn-secondary">Manage Staff Accounts</a>
+        <a href="/admin/students/student/" class="btn btn-secondary">Manage Students</a>
+        <a href="/admin/qrcodes/idcard/" class="btn btn-secondary">Manage ID Cards</a>
     </div>
-    {% if not user.is_superuser %}
-    <div id="superuser-only-msg" class="superuser-only-msg" role="alert">SUPERUSER ONLY</div>
-    {% endif %}
 </fieldset>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -96,31 +93,18 @@ document.addEventListener('DOMContentLoaded', function () {
     var logoInput = document.getElementById('id_logo');
     var previewImg = document.getElementById('logo-preview-new');
     var placeholder = document.getElementById('logo-preview-placeholder-new');
-    if (logoInput && previewImg && placeholder) {
-        logoInput.addEventListener('change', function () {
-            var file = logoInput.files && logoInput.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
-                placeholder.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+    if (!logoInput || !previewImg || !placeholder) return;
 
-    // Non-superusers: show "SUPERUSER ONLY" instead of opening the admin panel.
-    var msg = document.getElementById('superuser-only-msg');
-    var hideTimer = null;
-    document.querySelectorAll('[data-superuser-only]').forEach(function (link) {
-        link.addEventListener('click', function (event) {
-            event.preventDefault();
-            if (!msg) return;
-            msg.style.display = 'block';
-            clearTimeout(hideTimer);
-            hideTimer = setTimeout(function () { msg.style.display = 'none'; }, 4000);
-        });
+    logoInput.addEventListener('change', function () {
+        var file = logoInput.files && logoInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
     });
 });
 </script>

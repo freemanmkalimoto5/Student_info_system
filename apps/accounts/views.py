@@ -2,8 +2,11 @@ from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Count, Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseNotAllowed
+
+from apps.students.models import Student
 
 from .decorators import admin_required, full_admin_required, superuser_required, is_clerk
 from .forms import SiteSettingsForm, AddAdminForm, AdminProfileForm, ClerkSettingsForm
@@ -91,31 +94,37 @@ def _clerk_settings(request):
     return render(request, 'accounts/clerk_settings.html', {'form': form})
 
 
-@full_admin_required
+@superuser_required
 def add_admin(request):
     """
-    Lets an existing full admin/superuser create a new login — either
-    a full Admin or a restricted Clerk. Clerks cannot reach this page
-    themselves (full_admin_required). The new account completes their
-    own profile on first login (see complete_profile below).
+    Superuser-only: create a new login as a Superuser, a full Admin, or
+    a restricted Clerk. Admins and clerks cannot reach this page. The new
+    account completes their own profile on first login (see
+    complete_profile below).
     """
     if request.method == 'POST':
         form = AddAdminForm(request.POST)
         if form.is_valid():
+            role = form.cleaned_data['role']
+            make_superuser = role == 'superuser'
             user = User.objects.create_user(
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password'],
                 is_staff=True,
+                is_superuser=make_superuser,
             )
+            # A superuser's access comes from is_superuser itself; their
+            # profile row just holds their details ('admin' is its neutral role).
             AdminProfile.objects.create(
-                user=user, profile_completed=False, role=form.cleaned_data['role']
+                user=user, profile_completed=False,
+                role='admin' if make_superuser else role,
             )
             messages.success(
                 request,
-                f"{form.cleaned_data['role'].title()} account \"{user.username}\" created. "
+                f"{role.title()} account \"{user.username}\" created. "
                 f"They'll be asked to complete their profile on first login."
             )
-            return redirect('accounts:settings')
+            return redirect('accounts:administrators')
     else:
         form = AddAdminForm()
 
@@ -126,25 +135,114 @@ def add_admin(request):
 def complete_profile(request):
     """
     Shown automatically (via AdminProfileMiddleware) to a newly added
-    admin/clerk the first time they log in, before they can use the
-    rest of the system.
+    admin/clerk the first time they log in. Nothing else in the system
+    opens until every field here is filled in.
     """
     profile = getattr(request.user, 'admin_profile', None)
     if profile is None or profile.profile_completed:
         return redirect('students:list')
 
     if request.method == 'POST':
-        form = AdminProfileForm(request.POST, instance=profile)
+        form = AdminProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            obj = form.save(commit=False)
+            first = form.cleaned_data['first_name']
+            middle = form.cleaned_data['middle_name']
+            last = form.cleaned_data['last_name']
+
+            obj = form.save(commit=False)          # also carries the uploaded photo
+            obj.full_name = f"{first} {middle} {last}"
             obj.profile_completed = True
             obj.save()
+
+            # First/last name and email live on the User; the real name makes the
+            # sidebar and the audit log show who this person is, not just a username.
+            request.user.email = form.cleaned_data['email']
+            request.user.first_name = first
+            request.user.last_name = last
+            request.user.save(update_fields=['email', 'first_name', 'last_name'])
+
             messages.success(request, "Profile completed — welcome aboard!")
             return redirect('students:list')
     else:
-        form = AdminProfileForm(instance=profile)
+        form = AdminProfileForm(instance=profile, initial={
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+        })
 
     return render(request, 'accounts/complete_profile.html', {'form': form})
+
+
+@superuser_required
+def administrators(request):
+    """
+    Superuser-only overview of every staff login: who they are, how to
+    reach them, role, whether they have finished their first-login profile,
+    when they last signed in, and how much they have done in the system.
+    """
+    users = (
+        User.objects.filter(is_staff=True)
+        .select_related('admin_profile')
+        .annotate(action_count=Count('audit_actions', distinct=True),
+                  last_action=Max('audit_actions__timestamp'))
+        .order_by('-is_superuser', 'date_joined')
+    )
+    students_added = dict(
+        Student.objects.exclude(added_by=None).order_by()
+        .values_list('added_by').annotate(n=Count('id'))
+    )
+
+    admins = []
+    counts = {'superuser': 0, 'admin': 0, 'clerk': 0, 'pending': 0}
+    for u in users:
+        profile = getattr(u, 'admin_profile', None)
+
+        if u.is_superuser:
+            role_key, role_label = 'superuser', 'Superuser'
+        elif profile and profile.role == 'clerk':
+            role_key, role_label = 'clerk', 'Clerk'
+        else:
+            role_key, role_label = 'admin', 'Admin'
+        counts[role_key] += 1
+
+        # The original superuser (from createsuperuser) has no profile row and
+        # is never "pending"; a superuser ADDED through the app has one and
+        # must finish the first-login form like everyone else.
+        awaiting = (profile is None and not u.is_superuser) or (profile is not None and not profile.profile_completed)
+        if awaiting:
+            counts['pending'] += 1
+        if awaiting and u.last_login is None:
+            state, state_label = 'pending', 'Has not logged in yet'
+        elif awaiting:
+            state, state_label = 'pending', 'Profile pending'
+        elif u.is_superuser:
+            state, state_label = 'super', 'Superuser'
+        else:
+            state, state_label = 'ok', 'Profile complete'
+
+        full_name = (profile.full_name if profile and profile.full_name else '') or u.get_full_name()
+        phone = profile.phone if profile else ''
+        position = profile.position if profile else ''
+        admins.append({
+            'user': u,
+            'profile': profile,
+            'display_name': full_name or u.username,
+            'full_name': full_name,
+            'email': u.email,
+            'phone': phone,
+            'position': position,
+            'role_key': role_key,
+            'role_label': role_label,
+            'state': state,
+            'state_label': state_label,
+            'students_added': students_added.get(u.pk, 0),
+            'search': ' '.join([u.username, full_name, u.email, phone, position, role_label]).lower(),
+        })
+
+    return render(request, 'accounts/administrators.html', {
+        'admins': admins,
+        'counts': counts,
+    })
 
 
 @full_admin_required

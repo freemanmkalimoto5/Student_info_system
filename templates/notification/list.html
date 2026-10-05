@@ -1,75 +1,358 @@
 {% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
 {% block content %}
 <style>
-  .nf-wrap{max-width:900px}
-  .nf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-  .nf-card{border:1px solid #e3e8ee;border-radius:12px;padding:16px 18px;margin-bottom:12px;background:#fff}
-  .nf-card.pending{border-left:4px solid #b45309}
-  .nf-card.fixed{border-left:4px solid #15803d;opacity:.85}
-  .nf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-  .nf-title{font-weight:700;color:#1f2d3d}
-  .nf-badge{font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
-  .nf-badge.pending{background:#fef3c7;color:#b45309}
-  .nf-badge.fixed{background:#dcfce7;color:#15803d}
-  .nf-msg{white-space:pre-line;color:#475467;font-size:.92rem;margin:8px 0}
-  .nf-meta{color:#8792a2;font-size:.8rem}
-  .nf-btn{display:inline-block;border:0;border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#15803d;margin-top:8px}
-  .nf-btn.clear{background:#b91c1c}
-  .nf-empty{color:#8792a2;padding:20px 0;text-align:center}
-  .nf-section-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+  /* ==================== Notifications page ==================== */
+  .nt-wrap{
+    --nt-bg:#ffffff; --nt-soft:#f6f8fb; --nt-border:#e3e8ee;
+    --nt-text:#1f2d3d; --nt-muted:#667085; --nt-faint:#8792a2;
+    --nt-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px -14px rgba(16,24,40,.22);
+    --nt-amber:#b45309; --nt-amber-bg:#fef3c7;
+    --nt-blue:#1d4ed8;  --nt-blue-bg:#dbeafe;
+    --nt-green:#15803d; --nt-green-bg:#dcfce7;
+    --nt-red:#b91c1c;   --nt-red-bg:#fee2e2;
+    max-width:980px; margin:0 auto; color:var(--nt-text);
+  }
+  body[data-theme="dark"] .nt-wrap{
+    --nt-bg:#1e293b; --nt-soft:#16213a; --nt-border:#334155;
+    --nt-text:#f1f5f9; --nt-muted:#94a3b8; --nt-faint:#64748b;
+    --nt-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);
+    --nt-amber:#fcd34d; --nt-amber-bg:rgba(245,158,11,.18);
+    --nt-blue:#93c5fd;  --nt-blue-bg:rgba(59,130,246,.2);
+    --nt-green:#86efac; --nt-green-bg:rgba(34,197,94,.18);
+    --nt-red:#fca5a5;   --nt-red-bg:rgba(239,68,68,.2);
+  }
+  @media (prefers-color-scheme: dark){
+    body[data-theme="system"] .nt-wrap{
+      --nt-bg:#1e293b; --nt-soft:#16213a; --nt-border:#334155;
+      --nt-text:#f1f5f9; --nt-muted:#94a3b8; --nt-faint:#64748b;
+      --nt-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);
+      --nt-amber:#fcd34d; --nt-amber-bg:rgba(245,158,11,.18);
+      --nt-blue:#93c5fd;  --nt-blue-bg:rgba(59,130,246,.2);
+      --nt-green:#86efac; --nt-green-bg:rgba(34,197,94,.18);
+      --nt-red:#fca5a5;   --nt-red-bg:rgba(239,68,68,.2);
+    }
+  }
+  .nt-wrap svg{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+  /* ---------- hero ---------- */
+  .nt-hero{position:relative;overflow:hidden;border-radius:20px;padding:26px 28px;color:#fff;
+    background:linear-gradient(125deg,#1f3b5e 0%,#2f5788 55%,#3b6fb0 100%);
+    box-shadow:0 18px 40px -20px rgba(31,59,94,.7);margin-bottom:22px}
+  .nt-hero::before,.nt-hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
+  .nt-hero::before{width:260px;height:260px;right:-70px;top:-110px}
+  .nt-hero::after{width:150px;height:150px;right:150px;bottom:-90px}
+  .nt-hero-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+  .nt-hero-id{display:flex;align-items:center;gap:16px}
+  .nt-bell{position:relative;width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.16);font-size:26px;backdrop-filter:blur(4px)}
+  .nt-bell-dot{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#f59e0b;
+    color:#1f2d3d;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #2a4f7e}
+  .nt-hero h1{margin:0;font-size:1.65rem;line-height:1.15;color:#fff !important}
+  .nt-hero p{margin:4px 0 0;color:rgba(255,255,255,.82) !important;font-size:.95rem}
+  .nt-hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .nt-hero-actions form{margin:0}
+  .nt-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+  .nt-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 16px}
+  .nt-stat b{display:block;font-size:1.6rem;line-height:1.1;color:#fff}
+  .nt-stat span{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+
+  /* ---------- buttons ---------- */
+  .nt-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:11px;padding:10px 16px;font:inherit;font-size:.88rem;
+    font-weight:650;cursor:pointer;text-decoration:none;line-height:1.2;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease,background .15s ease}
+  .nt-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .nt-btn:active{transform:translateY(0)}
+  .nt-btn:focus-visible{outline:3px solid rgba(59,130,246,.5);outline-offset:2px}
+  .nt-btn.hero{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)}
+  .nt-btn.hero.solid{background:#fff;color:#1f3b5e !important;border-color:#fff}
+  .nt-btn.fix{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 6px 14px -6px rgba(21,128,61,.7)}
+  .nt-btn.ghost{background:var(--nt-soft);color:var(--nt-muted);border:1px solid var(--nt-border)}
+  .nt-btn.danger{background:var(--nt-red-bg);color:var(--nt-red) !important;border:1px solid transparent}
+  .nt-btn svg{font-size:16px}
+
+  /* ---------- tabs ---------- */
+  .nt-tabs{display:inline-flex;gap:4px;padding:5px;border-radius:14px;background:var(--nt-soft);border:1px solid var(--nt-border);margin-bottom:18px;flex-wrap:wrap}
+  .nt-tab{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--nt-muted);padding:8px 14px;border-radius:10px;
+    font:inherit;font-size:.88rem;font-weight:650;cursor:pointer;transition:background .15s ease,color .15s ease}
+  .nt-tab{color:var(--nt-muted) !important}
+  .nt-tab:hover{color:var(--nt-text) !important}
+  .nt-tab.active{background:var(--nt-bg);color:var(--nt-text) !important;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .nt-count{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--nt-border);color:var(--nt-muted);font-size:.74rem;font-weight:800;text-align:center}
+  .nt-tab.active .nt-count{background:#2f5788;color:#fff}
+
+  /* ---------- sections ---------- */
+  .nt-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:26px 0 12px}
+  .nt-section-head h2{margin:0;font-size:1.05rem;display:flex;align-items:center;gap:10px;color:var(--nt-text)}
+  .nt-dot{width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 4px var(--nt-amber-bg)}
+  .nt-dot.ok{background:#22c55e;box-shadow:0 0 0 4px var(--nt-green-bg)}
+  .nt-section-head form{margin:0}
+
+  /* ---------- cards ---------- */
+  .nt-list{display:flex;flex-direction:column;gap:14px}
+  .nt-card{--accent:var(--nt-amber);--accent-bg:var(--nt-amber-bg);
+    position:relative;display:flex;gap:16px;padding:18px 20px 18px 22px;background:var(--nt-bg);border:1px solid var(--nt-border);
+    border-radius:18px;box-shadow:var(--nt-shadow);overflow:hidden;
+    animation:nt-rise .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 55ms)}
+  .nt-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent)}
+  .nt-card[data-type="system_check"]{--accent:var(--nt-blue);--accent-bg:var(--nt-blue-bg)}
+  .nt-card[hidden]{display:none}
+  .nt-card.is-fixed{--accent:var(--nt-green);--accent-bg:var(--nt-green-bg);box-shadow:none;padding:14px 18px 14px 22px}
+  .nt-card.is-fixed .nt-icon{width:38px;height:38px;border-radius:12px;font-size:19px}
+  .nt-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px;
+    background:var(--accent-bg);color:var(--accent)}
+  .nt-body{flex:1;min-width:0}
+  .nt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .nt-title{font-weight:750;font-size:1.02rem;line-height:1.3;color:var(--nt-text)}
+  .nt-time{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--nt-faint);font-size:.8rem;margin-top:2px}
+  .nt-time svg{font-size:13px}
+  .nt-tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
+  .nt-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+    background:var(--accent-bg);color:var(--accent)}
+  .nt-tag.status{background:var(--nt-amber-bg);color:var(--nt-amber)}
+  .nt-card.is-fixed .nt-tag.status{background:var(--nt-green-bg);color:var(--nt-green)}
+  .nt-msg{white-space:pre-line;color:var(--nt-muted);font-size:.92rem;line-height:1.55;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+    background:var(--nt-soft);border-radius:12px;padding:12px 14px}
+  .nt-msg.open{display:block;-webkit-line-clamp:unset}
+  .nt-card.is-fixed .nt-msg{-webkit-line-clamp:2;background:transparent;padding:0;font-size:.86rem}
+  .nt-more{display:inline-block;margin-top:6px;font-size:.82rem;font-weight:700;color:var(--nt-blue);text-decoration:none}
+  .nt-more:hover{text-decoration:underline}
+  .nt-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+  .nt-foot form{margin:0}
+  .nt-meta{color:var(--nt-faint);font-size:.8rem;margin-top:8px}
+
+  .nt-chip{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;text-decoration:none;
+    background:var(--nt-soft);border:1px solid var(--nt-border);color:var(--nt-text);font-size:.85rem;font-weight:650;transition:border-color .15s ease,transform .15s ease}
+  .nt-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .nt-chip-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);color:var(--accent);font-weight:800;font-size:.8rem}
+  .nt-chip small{color:var(--nt-faint);font-weight:600}
+  .nt-chip svg{font-size:14px;color:var(--nt-faint)}
+
+  /* ---------- empty states ---------- */
+  .nt-empty{text-align:center;padding:38px 20px;border:2px dashed var(--nt-border);border-radius:20px;background:var(--nt-soft)}
+  .nt-empty svg.big{width:76px;height:76px;stroke-width:1.5;color:#22c55e;margin-bottom:6px}
+  .nt-empty h3{margin:8px 0 4px;font-size:1.15rem;color:var(--nt-text)}
+  .nt-empty p{margin:0;color:var(--nt-muted);font-size:.92rem}
+  .nt-empty-small{color:var(--nt-faint);text-align:center;padding:18px 0;font-size:.9rem}
+  #nt-filter-empty{display:none}
+
+  @keyframes nt-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.nt-card{animation:none}.nt-btn,.nt-chip{transition:none}}
+  @media (max-width:640px){
+    .nt-hero{padding:20px 18px}
+    .nt-stats{grid-template-columns:repeat(3,1fr);gap:8px}
+    .nt-stat{padding:10px 12px}
+    .nt-card{padding:16px 16px 16px 20px;gap:12px}
+    .nt-icon{width:40px;height:40px;font-size:20px}
+    .nt-top{flex-direction:column;gap:2px}
+    .nt-foot .nt-btn{width:100%;justify-content:center}
+  }
 </style>
 
-<div class="nf-wrap">
-  <div class="nf-head">
-    <h2>Notifications {% if pending_count %}<span class="nf-badge pending">{{ pending_count }} pending</span>{% endif %}</h2>
-  </div>
+<div class="nt-wrap">
 
-  <h3 style="margin-top:20px;color:#1f3b5e">Pending</h3>
-  {% for n in pending %}
-    <div class="nf-card pending">
-      <div class="nf-top">
-        <span class="nf-title">{{ n.title }}</span>
-        <span class="nf-badge pending">Pending</span>
+  <!-- ============ hero ============ -->
+  <section class="nt-hero">
+    <div class="nt-hero-top">
+      <div class="nt-hero-id">
+        <div class="nt-bell">
+          <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          {% if pending_count %}<span class="nt-bell-dot">{{ pending_count }}</span>{% endif %}
+        </div>
+        <div>
+          <h1>Notifications</h1>
+          <p>{% if pending_count %}{{ pending_count }} item{{ pending_count|pluralize }} need{{ pending_count|pluralize:"s," }} your attention.{% else %}You are all caught up.{% endif %}</p>
+        </div>
       </div>
-      <div class="nf-msg">{{ n.message }}</div>
-      <div class="nf-meta">
-        {{ n.created_at|date:"d M Y, H:i" }}
-        {% if n.existing_student %} · existing record:
-          <a href="{% url 'students:detail' n.existing_student.pk %}">{{ n.existing_student.full_name }} ({{ n.existing_student.student_number }})</a>
+
+      <div class="nt-hero-actions">
+        <form method="post" action="{% url 'notifications:run_checks' %}">
+          {% csrf_token %}
+          <button type="submit" class="nt-btn hero solid">
+            <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Run system check
+          </button>
+        </form>
+        {% if pending_count %}
+        <form method="post" action="{% url 'notifications:mark_all_fixed' %}"
+              onsubmit="return confirm('Mark all {{ pending_count }} pending notification(s) as fixed?');">
+          {% csrf_token %}
+          <button type="submit" class="nt-btn hero">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Mark all fixed
+          </button>
+        </form>
         {% endif %}
       </div>
-      <form method="post" action="{% url 'notifications:mark_fixed' n.pk %}">
-        {% csrf_token %}
-        <button type="submit" class="nf-btn">Mark as fixed</button>
-      </form>
     </div>
-  {% empty %}
-    <p class="nf-empty">Nothing pending.</p>
-  {% endfor %}
 
-  <div class="nf-section-head">
-    <h3 style="color:#1f3b5e;margin:0">Recently fixed</h3>
+    <div class="nt-stats">
+      <div class="nt-stat"><b>{{ pending_count }}</b><span>Pending</span></div>
+      <div class="nt-stat"><b>{{ fixed_count }}</b><span>Fixed</span></div>
+      <div class="nt-stat"><b>{{ pending_count|add:fixed_count }}</b><span>Total</span></div>
+    </div>
+  </section>
+
+  <!-- ============ filter tabs ============ -->
+  <div class="nt-tabs" role="tablist" aria-label="Filter notifications">
+    <button type="button" class="nt-tab active" data-filter="all" role="tab" aria-selected="true">All <span class="nt-count" data-count="all"></span></button>
+    <button type="button" class="nt-tab" data-filter="duplicate_student" role="tab" aria-selected="false">Duplicates <span class="nt-count" data-count="duplicate_student"></span></button>
+    <button type="button" class="nt-tab" data-filter="system_check" role="tab" aria-selected="false">System checks <span class="nt-count" data-count="system_check"></span></button>
+  </div>
+
+  <!-- ============ pending ============ -->
+  <div class="nt-section-head" style="margin-top:6px">
+    <h2><span class="nt-dot"></span> Needs attention</h2>
+  </div>
+
+  <div class="nt-list" id="nt-pending">
+    {% for n in pending %}
+    <article class="nt-card" data-type="{{ n.notif_type }}" data-status="pending" style="--i:{{ forloop.counter0 }}">
+      <div class="nt-icon">
+        {% if n.notif_type == 'duplicate_student' %}
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        {% else %}
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {% endif %}
+      </div>
+      <div class="nt-body">
+        <div class="nt-top">
+          <div class="nt-title">{{ n.title }}</div>
+          <span class="nt-time" title="{{ n.created_at|date:'d M Y, H:i' }}">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ n.created_at|timesince }} ago
+          </span>
+        </div>
+        <div class="nt-tags">
+          <span class="nt-tag">{{ n.get_notif_type_display }}</span>
+          <span class="nt-tag status">Pending</span>
+        </div>
+        <div class="nt-msg">{{ n.message }}</div>
+
+        <div class="nt-foot">
+          {% if n.existing_student %}
+          <a class="nt-chip" href="{% url 'students:detail' n.existing_student.pk %}">
+            <span class="nt-chip-av">{{ n.existing_student.first_name|slice:":1"|upper }}</span>
+            <span>{{ n.existing_student.full_name }} <small>{{ n.existing_student.student_number }}</small></span>
+            <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          {% else %}<span></span>{% endif %}
+
+          <form method="post" action="{% url 'notifications:mark_fixed' n.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="nt-btn fix">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark as fixed
+            </button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <div class="nt-empty">
+      <svg class="big" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <h3>All clear</h3>
+      <p>Nothing needs your attention right now. Press “Run system check” any time to scan again.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="nt-empty-small" id="nt-filter-empty">No notifications of this type.</div>
+
+  <!-- ============ fixed ============ -->
+  <div class="nt-section-head">
+    <h2><span class="nt-dot ok"></span> Recently fixed</h2>
     {% if fixed_count %}
     <form method="post" action="{% url 'notifications:clear_fixed' %}"
           onsubmit="return confirm('Delete all {{ fixed_count }} fixed notification(s)? This cannot be undone.');">
       {% csrf_token %}
-      <button type="submit" class="nf-btn clear">Clear notifications</button>
+      <button type="submit" class="nt-btn danger">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Clear fixed
+      </button>
     </form>
     {% endif %}
   </div>
-  {% for n in fixed %}
-    <div class="nf-card fixed">
-      <div class="nf-top">
-        <span class="nf-title">{{ n.title }}</span>
-        <span class="nf-badge fixed">Fixed</span>
+
+  <div class="nt-list" id="nt-fixed">
+    {% for n in fixed %}
+    <article class="nt-card is-fixed" data-type="{{ n.notif_type }}" data-status="fixed" style="--i:{{ forloop.counter0 }}">
+      <div class="nt-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <div class="nf-msg">{{ n.message }}</div>
-      <div class="nf-meta">
-        Fixed {{ n.fixed_at|date:"d M Y, H:i" }}{% if n.fixed_by %} by {{ n.fixed_by.get_full_name|default:n.fixed_by.username }}{% endif %}
+      <div class="nt-body">
+        <div class="nt-top">
+          <div class="nt-title">{{ n.title }}</div>
+          <span class="nt-tag status">Fixed</span>
+        </div>
+        <div class="nt-msg">{{ n.message }}</div>
+        <div class="nt-meta">
+          Fixed {{ n.fixed_at|date:"d M Y, H:i" }}{% if n.fixed_by %} by {{ n.fixed_by.get_full_name|default:n.fixed_by.username }}{% endif %}
+        </div>
       </div>
-    </div>
-  {% empty %}
-    <p class="nf-empty">No fixed notifications yet.</p>
-  {% endfor %}
+    </article>
+    {% empty %}
+    <p class="nt-empty-small">Nothing has been marked as fixed yet.</p>
+    {% endfor %}
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var wrap = document.querySelector('.nt-wrap');
+    if (!wrap) return;
+    var cards = wrap.querySelectorAll('.nt-card');
+    var tabs = wrap.querySelectorAll('.nt-tab');
+    var filterEmpty = document.getElementById('nt-filter-empty');
+
+    // Long messages (e.g. lists of student numbers) are clamped; add "Show more".
+    wrap.querySelectorAll('.nt-msg').forEach(function (msg) {
+        if (msg.scrollHeight > msg.clientHeight + 2) {
+            var more = document.createElement('a');
+            more.href = '#';
+            more.className = 'nt-more';
+            more.textContent = 'Show more';
+            more.addEventListener('click', function (e) {
+                e.preventDefault();
+                var open = msg.classList.toggle('open');
+                more.textContent = open ? 'Show less' : 'Show more';
+            });
+            msg.parentNode.insertBefore(more, msg.nextSibling);
+        }
+    });
+
+    // Tab counters = how many PENDING items of each kind.
+    function pendingCount(type) {
+        var n = 0;
+        cards.forEach(function (c) {
+            if (c.dataset.status === 'pending' && (type === 'all' || c.dataset.type === type)) n++;
+        });
+        return n;
+    }
+    wrap.querySelectorAll('[data-count]').forEach(function (el) {
+        el.textContent = pendingCount(el.dataset.count);
+    });
+
+    // Filter tabs.
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var type = tab.dataset.filter;
+            tabs.forEach(function (t) {
+                var on = t === tab;
+                t.classList.toggle('active', on);
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            var visible = 0;
+            cards.forEach(function (c) {
+                var show = type === 'all' || c.dataset.type === type;
+                c.hidden = !show;
+                if (show) visible++;
+            });
+            if (filterEmpty) filterEmpty.style.display = (cards.length && visible === 0) ? 'block' : 'none';
+        });
+    });
+});
+</script>
 {% endblock %}

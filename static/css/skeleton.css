@@ -1,0 +1,87 @@
+/* ============================================================
+   SKELETON LOADING -- used on every page (see static/js/skeleton.js)
+   Light, dark and "match system" themes are all handled here.
+   ============================================================ */
+
+:root {
+    --sk-base: #e6ebf1;
+    --sk-shine: #f4f6f9;
+    --sk-line: #e3e8ee;
+}
+body[data-theme="dark"] {
+    --sk-base: #243047;
+    --sk-shine: #33415c;
+    --sk-line: #334155;
+}
+@media (prefers-color-scheme: dark) {
+    body[data-theme="system"] {
+        --sk-base: #243047;
+        --sk-shine: #33415c;
+        --sk-line: #334155;
+    }
+}
+
+@keyframes sk-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* every grey placeholder block */
+.sk {
+    background-color: var(--sk-base);
+    background-image: linear-gradient(90deg, var(--sk-base) 0%, var(--sk-shine) 50%, var(--sk-base) 100%);
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+/* real <img> tags (photos, QR codes, logos) while they download */
+img.sk-img {
+    background-color: var(--sk-base);
+    background-image: linear-gradient(90deg, var(--sk-base) 0%, var(--sk-shine) 50%, var(--sk-base) 100%);
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.4s ease-in-out infinite;
+    color: transparent;          /* hide the alt text until the image is ready */
+    aspect-ratio: 1 / 1;         /* gives width:100%;height:auto images a visible box */
+}
+
+/* ---- page-level skeleton: replaces the main content while the next page loads ---- */
+body.sk-active main.container > *:not(#sk-overlay) { display: none !important; }
+#sk-overlay { display: block; pointer-events: none; user-select: none; }
+
+.sk-title  { height: 30px; width: min(320px, 60%); margin: 6px 0 20px; }
+.sk-line   { height: 12px; margin: 9px 0; }
+.sk-input  { height: 42px; width: 100%; max-width: 460px; margin: 0 0 18px; border-radius: 10px; }
+.sk-field  { height: 40px; border-radius: 10px; }
+.sk-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.sk-pill   { height: 36px; width: 130px; border-radius: 9px; }
+
+.sk-stats  { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.sk-stat   { height: 70px; border-radius: 12px; }
+
+.sk-table  { display: flex; flex-direction: column; gap: 10px; }
+.sk-tr     { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 1px solid var(--sk-line); border-radius: 10px; }
+.sk-thumb  { width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto; }
+.sk-cell   { height: 14px; }
+.sk-btn    { height: 30px; width: 64px; border-radius: 8px; margin-left: auto; flex: 0 0 auto; }
+
+.sk-box    { border: 1px solid var(--sk-line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+.sk-grid   { display: grid; gap: 16px; }
+.sk-grid.cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.sk-grid.tiles { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.sk-grid.idc   { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.sk-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+
+.sk-head   { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.sk-avatar { width: 54px; height: 54px; border-radius: 50%; flex: 0 0 auto; }
+.sk-avatar.big { width: 96px; height: 96px; }
+.sk-square { width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; }
+.sk-strip  { height: 54px; border-radius: 12px 12px 0 0; margin: -16px -18px 12px; }
+.sk-center { display: flex; flex-direction: column; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sk, img.sk-img { animation: none; }
+}
+@media print {
+    #sk-overlay { display: none !important; }
+}

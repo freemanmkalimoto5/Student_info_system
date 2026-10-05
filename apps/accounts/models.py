@@ -90,6 +90,8 @@ class AdminProfile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='admin_profile')
     full_name = models.CharField(max_length=150, blank=True)
+    middle_name = models.CharField(max_length=100, blank=True)
+    photo = models.ImageField(upload_to='admin_photos/', blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True)
     position = models.CharField(max_length=100, blank=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='admin')
